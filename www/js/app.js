@@ -6,6 +6,10 @@
     var socket;
     var map;
     var marker;
+    var track = {
+        previousPosition: { lat: 0.0, lng: 0.0 },
+        markers: []
+    };
     var latitude = 0;
     var longitude = 0;
 
@@ -22,6 +26,8 @@
         socket.on('setup', function(data) {
             setupMap(data);
         });
+
+        setupClearButton();
     }
 
     function setupMap(data) {
@@ -35,7 +41,7 @@
             "v=3.22&" +
             "key=" + data.key +
             "&sensor=false" +
-            "&libraries=visualization" +
+            "&libraries=visualization,geometry" +
             "&callback=loadMap";
 
         window.loadMap = loadMap;
@@ -50,6 +56,19 @@
                                       center: { lat: 51.47, lng: 0 },
                                       mapTypeId: google.maps.MapTypeId.HYBRID
                                   });
+    }
+
+    function setupClearButton() {
+        document
+            .getElementById('clear-track')
+            .addEventListener('click', clearTrackMarkers);
+    }
+
+    function clearTrackMarkers() {
+        track.markers.forEach(function(marker) {
+            marker.setMap(null);
+        });
+        track.markers = [];
     }
 
     function handleData(data) {
@@ -81,6 +100,24 @@
         }
 
         map.setCenter(position);
+        updatePath(position);
+    }
+
+    function updatePath(currentPosition) {
+        var distance = google.maps.geometry
+            .spherical
+            .computeDistanceBetween(new google.maps.LatLng(currentPosition),
+                                    new google.maps.LatLng(track.previousPosition));
+        if (distance > 50) {
+            track.previousPosition = currentPosition;
+            var marker = new google.maps.Marker({
+                position: currentPosition,
+                map: map,
+                title: 'Path',
+                icon: '/images/track-marker.png'
+            });
+            track.markers.push(marker);
+        }
     }
 
     var handlers = {

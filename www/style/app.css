@@ -25,3 +25,12 @@ html, body {
     display: inline-block;
     min-width: 70px;
 }
+
+.top-margin {
+    margin-top: 6px;
+}
+
+button {
+    font-family: times,serif;
+    font-size: 16px;
+}
