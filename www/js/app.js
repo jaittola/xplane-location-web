@@ -7,11 +7,12 @@
     var map;
     var marker;
     var track = {
-        previousPosition: { lat: 0.0, lng: 0.0 },
+        previousPosition: greenwich(),
         markers: []
     };
     var latitude = 0;
     var longitude = 0;
+    var bearing = 0.0;
 
     function setup() {
         socket = io();
@@ -53,9 +54,14 @@
                                   {
                                       zoom: 10,
                                       scaleControl: true,
-                                      center: { lat: 51.47, lng: 0 },
+                                      center: greenwich(),
                                       mapTypeId: google.maps.MapTypeId.HYBRID
                                   });
+    }
+
+
+    function greenwich() {
+        return { lat: 51.47, lng: 0 };
     }
 
     function setupClearButton() {
@@ -88,27 +94,40 @@
 
         var position = {lat: latitude, lng: longitude};
 
+        map.setCenter(position);
+
         if (!marker) {
             marker = new google.maps.Marker({
                 position: position,
-                map: map,
-                title: 'Location'
+                map: map
             });
         }
         else {
             marker.setPosition(position);
         }
+        marker.setIcon(makeDirectionSymbol(bearing));
 
-        map.setCenter(position);
         updatePath(position);
     }
 
+    function makeDirectionSymbol(bearing) {
+        return {
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 3,
+            rotation: Number(bearing),
+            fillColor: "#ff0000",
+            strokeColor: "#ff0000",
+        };
+    }
+
     function updatePath(currentPosition) {
+        var p1 = new google.maps.LatLng(currentPosition);
+        var p2 = new google.maps.LatLng(track.previousPosition);
         var distance = google.maps.geometry
             .spherical
-            .computeDistanceBetween(new google.maps.LatLng(currentPosition),
-                                    new google.maps.LatLng(track.previousPosition));
-        if (distance > 50) {
+            .computeDistanceBetween(p1, p2);
+        console.log("Calculated distance is " + distance + ", curr pos " + p1 + ", " + p2 + ", " + JSON.stringify(track.previousPosition));
+        if (distance > 30) {
             track.previousPosition = currentPosition;
             var marker = new google.maps.Marker({
                 position: currentPosition,
@@ -122,7 +141,7 @@
 
     var handlers = {
         'velocity': setNumericalData,
-        'heading': setNumericalData,
+        'heading': setHeading,
         'altitude': setNumericalData,
         'lat': setLatitude,
         'lon': setLongitude,
@@ -150,6 +169,13 @@
     function setLongitude(key, value) {
         if (_.isNumber(value)) {
             longitude = value;
+        }
+        setNumericalData(key, value);
+    }
+
+    function setHeading(key, value) {
+        if (_.isNumber(value)) {
+            bearing = value;
         }
         setNumericalData(key, value);
     }
