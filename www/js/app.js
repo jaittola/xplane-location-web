@@ -15,6 +15,12 @@
     var bearing = 0.0;
 
     function setup() {
+        setupSocket();
+        setupClearButton();
+        setupMovableDataPanel();
+    }
+
+    function setupSocket() {
         socket = io();
 
         socket.on('connect', function() {
@@ -27,8 +33,6 @@
         socket.on('setup', function(data) {
             setupMap(data);
         });
-
-        setupClearButton();
     }
 
     function setupMap(data) {
@@ -68,6 +72,33 @@
         document
             .getElementById('clear-track')
             .addEventListener('click', clearTrackMarkers);
+    }
+
+    function setupMovableDataPanel() {
+        var panel = document.getElementById('stats');
+
+        panel.addEventListener('mousedown', function(event) {
+            var rect = panel.getBoundingClientRect();
+            var offsetX = event.clientX - rect.left;
+            var offsetY = event.clientY - rect.top;
+
+            panel.parentElement.addEventListener('mousemove', moveEventListener);
+            panel.addEventListener('mouseup', upEventListener);
+
+            function moveEventListener(event) {
+                var nextX = event.clientX - offsetX;
+                var nextY = event.clientY - offsetY;
+                panel.style.left = nextX + "px";
+                panel.style.top = nextY + "px";
+                event.preventDefault();
+            }
+
+            function upEventListener(event) {
+                panel.parentElement.removeEventListener('mousemove', moveEventListener);
+                panel.removeEventListener('mouseup', upEventListener);
+            }
+        });
+
     }
 
     function clearTrackMarkers() {
@@ -126,7 +157,6 @@
         var distance = google.maps.geometry
             .spherical
             .computeDistanceBetween(p1, p2);
-        console.log("Calculated distance is " + distance + ", curr pos " + p1 + ", " + p2 + ", " + JSON.stringify(track.previousPosition));
         if (distance > 30) {
             track.previousPosition = currentPosition;
             var marker = new google.maps.Marker({

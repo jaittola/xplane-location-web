@@ -6,19 +6,23 @@ html, body {
 }
 
 .mapview {
-    display: flex;
     height: 100%;
-}
-
-.fixed-width {
-    margin: 8px;
-    width: 230px;
-    flex: 0 0 230px;
 }
 
 .variable-width {
     height: 100%;
     width: 100%;
+}
+
+.movable-data-panel {
+    display: inline-block;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    margin: 8px;
+    padding: 10px;
+    width: 230px;
+    background-color: white;
 }
 
 .data-hdg {
