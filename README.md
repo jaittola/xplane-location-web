@@ -29,33 +29,32 @@ displays the data on a map.
 
 ## Configure X-Plane to position and speed data
 
-In X-Plane 10,
+In X-Plane 11,
 
-1. Navigate to "Settings" -> "Data Input & Output"
-  * Select the left-most check boxes for items 3 (speeds), 17
-    (pitch, roll, hadings), and 20 (lat, lon, altitude). These
-    selections cause your location, speed, and position data to be
-    sent from X-Plane in UDP packets.
-  * In the right-bottom corner of this view, set UDP date to 01.0 /
-    s. You can use a larger rate if you want your position be updated
-    more frequently. However, increasing the rate does not bring much
-    benefit with slow general-aviation aircraft.
-  * Close the settings view.
-
-2. navigate to "Settings" -> "Net connections"
-  * Select the "Data" tab.
-  * Select the check box labelled "IP of data receiver (for Data Input
-    & Output screen: Data-Set and Dataref-Out tabs)"
-  * To the left of this check box, Set "IP for Data Output" to
-    "127.0.0.1" (or to the address of the computer that runs the
-    application) and the port number to 49008.
+1. Navigate to "Settings" -> "Data Output" -> "General data output"
+  * To get your location, speed, and position data to be
+    sent from X-Plane in UDP packets, select the checkbox in the
+    'Network via UDP' column for items
+      * 3 (speeds),
+      * 17 (pitch, roll, headings)
+      * 20 (lat, lon, altitude).
+  * In the "Output rates" section in the same view,
+    set UDP date to 01.0 / s. You can use a larger rate if you want your
+    position be updated more frequently. However, increasing the rate does
+    not bring much benefit with slow general-aviation aircraft.
+  * In the "Networ configuration" section,
+      * Select the "Send network data output" click box
+      * Set the IP address and port number to match the computer in which
+        you want to run the data receiver application. For localhost,
+        enter 172.0.0.1 to the IP address field, and use 49008 as the
+        port number.  * Close the settings view.
 
 Now you're done! If everything has been set up correctly, the web
 browser should start tracking the position of your simulated aircraft.
 
 ## License
 
-Copyright © 2016 Jukka Aittola
+Copyright © 2016-2020 Jukka Aittola
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
