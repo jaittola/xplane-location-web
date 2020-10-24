@@ -8,8 +8,8 @@
     <script src="js/app.js"></script>
   </head>
   <body>
-    <div class="main">
-      <div class="controls" id="controls""></div>
+    <div class="mapview">
+      <div class="the-map" id="map"></div>
       <div class="data-panel" id="stats">
         <div class="data">
           <div class="data-item">Velocity</div>
@@ -36,8 +36,11 @@
           <span class="data-value" id="data-lon"> - </span>
           <span class="data-unit"> °</span>
         </div>
+        <div class="data top-margin">
+          <button id="clear-track">Clear track</button>
+        </div>
         <div class="spacer"></div>
-        <a href="map.html">Show map</a>
+        <a href="/">Show controls</a>
       </div>
   </body>
 </html>
