@@ -36,8 +36,9 @@ In X-Plane 11,
     sent from X-Plane in UDP packets, select the checkbox in the
     'Network via UDP' column for items
       * 3 (speeds),
-      * 17 (pitch, roll, headings)
-      * 20 (lat, lon, altitude).
+      * 14 (gear and brakes),
+      * 17 (pitch, roll, headings),
+      * 20 (lat, lon, altitude)
   * In the "Output rates" section in the same view,
     set UDP date to 01.0 / s. You can use a larger rate if you want your
     position be updated more frequently. However, increasing the rate does
@@ -46,7 +47,7 @@ In X-Plane 11,
       * Select the "Send network data output" click box
       * Set the IP address and port number to match the computer in which
         you want to run the data receiver application. For localhost,
-        enter 172.0.0.1 to the IP address field, and use 49008 as the
+        enter 127.0.0.1 to the IP address field, and use 49008 as the
         port number.  * Close the settings view.
 
 Now you're done! If everything has been set up correctly, the web

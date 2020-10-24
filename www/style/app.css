@@ -28,8 +28,13 @@ html, body {
 
 .data-item {
     display: inline-block;
-    min-width: 70px;
+    min-width: 100px;
+    color: #606060;
 }
+
+.data-value, .data-unit {
+    color: #0000F0;
+};
 
 .top-margin {
     margin-top: 6px;

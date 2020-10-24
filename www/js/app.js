@@ -69,9 +69,11 @@
     }
 
     function setupClearButton() {
-        document
-            .getElementById('clear-track')
-            .addEventListener('click', clearTrackMarkers);
+        var clearButton = document
+            .getElementById('clear-track');
+        if (clearButton) {
+            clearButton.addEventListener('click', clearTrackMarkers);
+        }
     }
 
     function setupMovableDataPanel() {
@@ -175,6 +177,8 @@
         'altitude': setNumericalData,
         'lat': setLatitude,
         'lon': setLongitude,
+        'gear': setText,
+        'parking-brake': setText,
     };
 
     function setNumericalData(key, value) {
@@ -185,7 +189,7 @@
             if (_.isNumber(value)) {
                 resultValue = _.round(value, 1);
             }
-            element.innerHTML = resultValue;
+            element.textContent = resultValue;
         }
     }
 
@@ -210,4 +214,10 @@
         setNumericalData(key, value);
     }
 
+    function setText(key, value) {
+        var element = document.getElementById('data-' + key);
+        if (element) {
+            element.textContent = value;
+        }
+    }
 })();

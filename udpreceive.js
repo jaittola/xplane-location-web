@@ -26,7 +26,8 @@ const DATA_MSG_LEN = 9 * 4;
 
 function processMessage(msg, rinfo) {
     console.log(`server got: ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
-    if (msg.slice(0, DATAHDR.length).toString() != DATAHDR) {
+    const msgtype = msg.slice(0, DATAHDR.length).toString();
+    if (msgtype != DATAHDR) {
         console.log("Unknown message, will skip");
         return
     }
@@ -47,7 +48,7 @@ function processDataMessage(buffer) {
             return {
                 dataIndex: data.readInt32LE(0),
                 dataFields: _.chain(_.range(8))
-                    .map((idx) => { return data.readFloatLE(idx * 4); })
+                    .map((idx) => { return data.readFloatLE((idx + 1) * 4); })
                     .value()
             };
         })
@@ -71,28 +72,52 @@ function processDataMessage(buffer) {
 
 const messageParsers = {
     3: parseVelocities,
+    14: parseGearAndBrakes,
     17: parsePitchRollHeadings,
     20: parseLatLonAltitude
 };
 
 function parseVelocities(message) {
     return _.assign(message, {
-        velocity: message.dataFields[1]
+        kias: message.dataFields[0],
+        ktas: message.dataFields[2],
+        ktgs: message.dataFields[3],
+        velocity: message.dataFields[0]
+    });
+}
+
+function parseGearAndBrakes(message) {
+    let gear;
+    switch (message.dataFields[0]) {
+    case 1:
+        gear = 'Down';
+        break;
+    case 0:
+        gear = 'Up';
+        break;
+    default:
+        gear = 'Moving';
+        break;
+    }
+    const parkingBrake = message.dataFields[1] == 0 ? 'Released' : 'Engaged';
+    return _.assign(message, {
+        gear: gear,
+        'parking-brake': parkingBrake,
     });
 }
 
 function parsePitchRollHeadings(message) {
     return _.assign(message, {
-        pitch: message.dataFields[1],
-        roll: message.dataFields[2],
-        heading: message.dataFields[4]
+        pitch: message.dataFields[0],
+        roll: message.dataFields[1],
+        heading: message.dataFields[3]
     });
 }
 
 function parseLatLonAltitude(message) {
     return _.assign(message, {
-        lat: message.dataFields[1],
-        lon: message.dataFields[2],
-        altitude: message.dataFields[3]
+        lat: message.dataFields[0],
+        lon: message.dataFields[1],
+        altitude: message.dataFields[2]
     });
 }
