@@ -10,28 +10,77 @@ server.on('error', (err) => {
     server.close();
 });
 
-server.on('message', processMessage)
-
-server.on('listening', () => {
+server.bind(49008, () => {
     var address = server.address();
     console.log(`Listening to UDP at ${address.address}:${address.port}`);
 });
 
-server.bind(49008)
+server.on('message', processMessage)
 
 var handlers = []
 
-const DATAHDR = "DATA";
 const DATA_MSG_LEN = 9 * 4;
+
+const DATAHDR = "DATA";
+const DREFHDR = 'DREF';
+const RREFHDR = 'RREF';
+
+let xplaneAddress = undefined;
+let datarefTimer = undefined;
+
+const datarefs = [
+    { name: 'sim/aircraft/gear/acf_gear_retract',
+      parse: parseAcfGearRetract,
+      length: 4,
+    },
+    { name: 'sim/cockpit2/annunciators/gear_unsafe',
+      parse: parseIsGearUnsafe,
+      length: 4,
+    },
+    { name: 'sim/cockpit2/controls/gear_handle_down',
+      parse: parseGearHandleDown,
+      length: 4,
+    },
+    { name: 'sim/cockpit2/controls/parking_brake_ratio',
+      parse: parseParkingBrakeRatio,
+      length: 4,
+    }
+];
+
+const datarefIDs = _.chain(datarefs)
+      .map((value, idx) => [value, idx])
+      .keyBy(([value, idx]) => idx)
+      .mapValues(([value, idx]) => value)
+      .value();
 
 function processMessage(msg, rinfo) {
     console.log(`server got: ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
+    xplaneAddress = {
+        address: rinfo.address,
+        port: rinfo.port,
+    };
     const msgtype = msg.slice(0, DATAHDR.length).toString();
-    if (msgtype != DATAHDR) {
-        console.log("Unknown message, will skip");
-        return
+    switch (msgtype) {
+    case DATAHDR:
+        processDataMessage(msg.slice(5));
+        break;
+    case DREFHDR:
+        console.log("Got dataref");
+        console.log("Message content is ", msg.slice(5).toString());
+        break;
+    case RREFHDR:
+        processRrefMessage(msg.slice(5));
+        break;
+    default:
+        console.log("Unknown message, will skip. Type is", msgtype);
+        console.log("Message content is ", msg.slice(5).toString());
+        break;
+                          }
+
+    if (!datarefTimer) {
+        requestDatarefs();
+        datarefTimer = setInterval(requestDatarefs, 20000);
     }
-    processDataMessage(msg.slice(5));
 }
 
 function processDataMessage(buffer) {
@@ -120,4 +169,102 @@ function parseLatLonAltitude(message) {
         lon: message.dataFields[1],
         altitude: message.dataFields[2]
     });
+}
+
+function parseAcfGearRetract(buffer) {
+    const retractingGear = buffer.readInt32LE(0);
+    return {
+        hasRetractingGear: !!retractingGear,
+    };
+}
+
+function parseGearHandleDown(buffer) {
+    const isDown = buffer.readInt32LE(0);
+    return {
+        isGearHandleDown: !!isDown,
+    };
+}
+
+function parseParkingBrakeRatio(buffer) {
+    const ratio = buffer.readFloatLE(0);
+    return {
+        parkingBrakeRatio: ratio,
+    };
+}
+
+function parseIsGearUnsafe(buffer) {
+    const isUnsafe = buffer.readInt32LE(0);
+    return {
+        isUnsafe: !!isUnsafe,
+    };
+}
+
+
+function processRrefMessage(buffer) {
+    let rest = buffer
+    while (rest = processRref(rest)) { }
+}
+
+function processRref(buffer) {
+    const datarefID = buffer.readInt32LE(0);
+    const datarefDetails = datarefIDs[datarefID]
+    if (datarefDetails) {
+        const length = datarefDetails.length || 4;
+        if (datarefDetails.parse) {
+            const result = datarefDetails.parse(buffer.slice(4, 4 + length))
+            console.log("Got Dataref", datarefID, datarefDetails.name, result);
+            handlers.forEach(handler => {
+                handler(result);
+            });
+        } else {
+            console.log("Got dataref", datarefID, datarefDetails ? datarefDetails.name : 'unknown',
+                        "raw content", buffer.slice(4, 4 + length).toString('hex'));
+        }
+        return buffer.length > 4 + length ?
+            buffer.slice(4 + length) : undefined;
+    } else {
+        console.log(`Got dataref with local ID ${datarefID} for which I have no handler`);
+        // TODO, cancel this dataref.
+        return undefined;
+    }
+}
+
+function requestDatarefs() {
+    if (!xplaneAddress) {
+        return;
+    }
+
+    const messages = Object.entries(datarefIDs)
+          .map(([key, value]) => {
+              const msg = Buffer.alloc(413);
+              msg.write(RREFHDR);
+              msg.writeInt32LE(1, offset(0));
+              msg.writeInt32LE(Number(key), offset(1));
+              msg.write(value.name, offset(2));
+              console.log(`Dataref request message: ${value.name} with key ${key}`);
+              return msg;
+          });
+
+    function sendMessage(nth) {
+        const msg = messages[nth];
+        if (!msg) {
+            return;
+        }
+
+        console.log(`Sending dataref request message ${msg.toString()}`);
+        server.send(msg, 49000, xplaneAddress.address, (err) => {
+            if (err) {
+                console.log("Sending to XPlane failed", err);
+                return;
+            }
+            setTimeout(() => { sendMessage(nth + 1) }, 20);
+        });
+    }
+
+    sendMessage(0);
+}
+
+function offset(item) {
+    const startOffset = 5;
+    return startOffset + item * 4;
 }
