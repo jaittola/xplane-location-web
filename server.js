@@ -16,11 +16,13 @@ if (!mapsKey) {
 
 var udpreceive = require('./udpreceive');
 udpreceive.onData((message) => { io.emit('data', message); });
-/*
+
+
 io.on('connection', function(socket) {
-    socket.emit('setup', { 'key': mapsKey });
+//    socket.emit('setup', { 'key': mapsKey });
+    socket.on('message', (data) => { udpreceive.command(data) });
 });
-*/
+
 
 app.use(express.static(__dirname + '/www')),
 

@@ -49,3 +49,78 @@ button {
     width: 100%;
     height: 30px;
 }
+
+.controls {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.control-container {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    border: 1px solid black;
+    border-radius: 3px;
+    background-color: #f0f0f0;
+}
+
+.control-toggle-button {
+    width: 60px;
+    min-height: 60px;
+    border-radius: 5px;
+    margin: 3px;
+    background-color: #d0d0d0;
+    border: 1px solid black;
+}
+
+.control-toggle-button:active {
+    background-color: #909090;
+    border: 5px solid black;
+}
+
+.control-toggle-button-down {
+    background-color: #909090;
+    border: 3px solid black;
+}
+
+.control-annunciator-container {
+    margin: 5px;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.control-annunciator-light-label {
+    margin-bottom: 3px;
+}
+
+.control-annunciator-light {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: #e0e0e0;
+}
+
+.inactive-red {
+    background-color: #caaaaa;
+}
+
+.active-red {
+    background-color: red;
+}
+
+.inactive-green {
+    background-color: #aabaaa
+}
+
+.active-green {
+    background-color: #00ca00;
+};
+
+.default-hidden {
+    display: none;
+}

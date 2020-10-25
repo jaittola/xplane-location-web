@@ -17,7 +17,8 @@
     function setup() {
         setupSocket();
         setupClearButton();
-        setupMovableDataPanel();
+        setupDataPanel();
+        setupControls();
     }
 
     function setupSocket() {
@@ -76,7 +77,7 @@
         }
     }
 
-    function setupMovableDataPanel() {
+    function setupDataPanel() {
         var panel = document.getElementById('stats');
 
         panel.addEventListener('mousedown', function(event) {
@@ -171,14 +172,27 @@
         }
     }
 
+    function setupControls() {
+        const controlsRoot = document.getElementById('controls')
+        if (!controlsRoot) {
+            return
+        }
+
+        const gearButton = document.getElementById('gear-handle');
+        gearButton.addEventListener('click', toggleGear);
+    }
+
     var handlers = {
         'velocity': setNumericalData,
         'heading': setHeading,
         'altitude': setNumericalData,
         'lat': setLatitude,
         'lon': setLongitude,
-        'gear': setText,
+        'gear': setGear,
         'parking-brake': setText,
+        'hasRetractingGear': setHasRetractingGear,
+        'isGearUnsafe': setIsGearUnsafe,
+        'isGearHandleDown': setIsGearHandleDown,
     };
 
     function setNumericalData(key, value) {
@@ -215,9 +229,43 @@
     }
 
     function setText(key, value) {
-        var element = document.getElementById('data-' + key);
+        const element = document.getElementById('data-' + key);
         if (element) {
             element.textContent = value;
+        }
+    }
+
+    function setGear(key, value) {
+        setText(key, value);
+        // TODO, the annunciator should look at gear deployment values.
+        const element = document.getElementById('gear-control-annunciator-down-and-locked');
+        addOrRemoveClass(element, value == 'Down', 'active-green');
+    }
+
+    function setHasRetractingGear(key, value) {
+        const element = document.getElementById('gear-control-container');
+        addOrRemoveClass(element, value, 'default-hidden');
+    }
+
+    function setIsGearUnsafe(key, value) {
+        const element = document.getElementById('gear-control-annunciator-in-transit');
+        addOrRemoveClass(element, value, 'active-red');
+    }
+
+    function setIsGearHandleDown(key, value) {
+        const element = document.getElementById('gear-handle');
+        addOrRemoveClass(element, value, 'control-toggle-button-down');
+    }
+
+    function toggleGear() {
+        socket.send({ command: 'sim/flight_controls/landing_gear_toggle' })
+    }
+
+    function addOrRemoveClass(element, shouldHaveClass, className) {
+        if (shouldHaveClass) {
+            element.classList.add(className);
+        } else {
+            element.classList.remove(className);
         }
     }
 })();

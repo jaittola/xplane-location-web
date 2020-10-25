@@ -9,7 +9,19 @@
   </head>
   <body>
     <div class="main">
-      <div class="controls" id="controls""></div>
+      <div class="controls" id="controls">
+        <div class="control-container default-hidden" id="gear-control-container">
+          <button class="control-toggle-button" id="gear-handle">Gear</button>
+          <div class="control-annunciator-container">
+            <div class="control-annunciator-light-label">In transit</div>
+            <div class="control-annunciator-light inactive-red" id="gear-control-annunciator-in-transit"></div>
+          </div>
+          <div class="control-annunciator-container">
+            <div class="control-annunciator-light-label">Down &amp; locked</div>
+            <div class="control-annunciator-light inactive-green" id="gear-control-annunciator-down-and-locked"></div>
+          </div>
+        </div>
+      </div>
       <div class="data-panel" id="stats">
         <div class="data">
           <div class="data-item">Velocity</div>

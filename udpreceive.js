@@ -4,6 +4,7 @@ const server = dgram.createSocket('udp4');
 const _ = require('lodash');
 
 exports.onData = (handler) => { handlers.push(handler); }
+exports.command = (cmd) => { performCommand(cmd); }
 
 server.on('error', (err) => {
     console.log(`server error:\n${err.stack}`);
@@ -241,12 +242,10 @@ function requestDatarefs() {
         }
 
         console.log(`Sending dataref request message ${msg.toString()}`);
-        server.send(msg, 49000, xplaneAddress.address, (err) => {
-            if (err) {
-                console.log("Sending to XPlane failed", err);
-                return;
-            }
-            setTimeout(() => { sendMessage(nth + 1) }, 20);
+        sendToXPlane(msg, () => {
+            setTimeout(() => {
+                sendMessage(nth + 1)
+            }, 20);
         });
     }
 
@@ -256,4 +255,32 @@ function requestDatarefs() {
 function offset(item) {
     const startOffset = 5;
     return startOffset + item * 4;
+}
+
+function performCommand(cmd) {
+    const cmdhdr = "CMND0";
+    const cmdValue = cmd.command;
+
+    if (!cmdValue) {
+        console.log("No command at performCommand. Ignoring.");
+        return;
+    }
+
+    const msg = Buffer.alloc(cmdhdr.length + cmdValue.length + 1);
+    msg.write(cmdhdr);
+    msg.write(cmdValue, cmdhdr.length);
+    console.log(`Sending command message to server ${msg.toString()}`);
+    sendToXPlane(msg);
+}
+
+function sendToXPlane(buffer, onSuccess) {
+    server.send(buffer, 49000, xplaneAddress.address, (err) => {
+        if (err) {
+            console.log("Sending to XPlane failed", err);
+            return;
+        }
+        if (onSuccess) {
+            onSuccess();
+        }
+    });
 }
