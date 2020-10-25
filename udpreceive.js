@@ -30,15 +30,18 @@ let datarefTimer = undefined;
 
 const datarefs = [
     { name: 'sim/aircraft/gear/acf_gear_retract',
-      parse: parseAcfGearRetract,
+      parse: parseBoolean,
+      target: 'hasRetractingGear',
       length: 4,
     },
     { name: 'sim/cockpit2/annunciators/gear_unsafe',
-      parse: parseIsGearUnsafe,
+      parse: parseBoolean,
+      target: 'isGearUnsafe',
       length: 4,
     },
     { name: 'sim/cockpit2/controls/gear_handle_down',
-      parse: parseGearHandleDown,
+      parse: parseBoolean,
+      target: 'isGearHandleDown',
       length: 4,
     },
     { name: 'sim/cockpit2/controls/parking_brake_ratio',
@@ -171,31 +174,17 @@ function parseLatLonAltitude(message) {
     });
 }
 
-function parseAcfGearRetract(buffer) {
-    const retractingGear = buffer.readInt32LE(0);
+function parseBoolean(buffer, dataref) {
+    const intVal = buffer.readInt32LE(0);
     return {
-        hasRetractingGear: !!retractingGear,
-    };
-}
-
-function parseGearHandleDown(buffer) {
-    const isDown = buffer.readInt32LE(0);
-    return {
-        isGearHandleDown: !!isDown,
-    };
+        [dataref.target]: !!intVal,
+    }
 }
 
 function parseParkingBrakeRatio(buffer) {
     const ratio = buffer.readFloatLE(0);
     return {
         parkingBrakeRatio: ratio,
-    };
-}
-
-function parseIsGearUnsafe(buffer) {
-    const isUnsafe = buffer.readInt32LE(0);
-    return {
-        isUnsafe: !!isUnsafe,
     };
 }
 
@@ -211,7 +200,7 @@ function processRref(buffer) {
     if (datarefDetails) {
         const length = datarefDetails.length || 4;
         if (datarefDetails.parse) {
-            const result = datarefDetails.parse(buffer.slice(4, 4 + length))
+            const result = datarefDetails.parse(buffer.slice(4, 4 + length), datarefDetails)
             console.log("Got Dataref", datarefID, datarefDetails.name, result);
             handlers.forEach(handler => {
                 handler(result);
