@@ -183,8 +183,8 @@
             return
         }
 
-        const gearButton = document.getElementById('gear-handle');
-        gearButton.addEventListener('click', toggleGear);
+        document.getElementById('gear-handle').addEventListener('click', toggleGear);
+        document.getElementById('parking-brake-button').addEventListener('click', toggleParkingBrake);
     }
 
     var handlers = {
@@ -194,7 +194,7 @@
         'lat': setLatitude,
         'lon': setLongitude,
         'gear': setGear,
-        'parking-brake': setText,
+        'parking-brake': setParkingBrake,
         'hasRetractingGear': setHasRetractingGear,
         'isGearUnsafe': setIsGearUnsafe,
         'isGearHandleDown': setIsGearHandleDown,
@@ -240,6 +240,12 @@
         }
     }
 
+    function setParkingBrake(key, value) {
+        setText(key, value);
+        const element = document.getElementById('parking-brake-button')
+        addOrRemoveClass(element, value == 'Engaged', 'control-toggle-button-down');
+    }
+
     function setGear(key, value) {
         setText(key, value);
         // TODO, the annunciator should look at gear deployment values.
@@ -263,7 +269,11 @@
     }
 
     function toggleGear() {
-        socket.send({ command: 'sim/flight_controls/landing_gear_toggle' })
+        socket.send({ command: 'sim/flight_controls/landing_gear_toggle' });
+    }
+
+    function toggleParkingBrake() {
+        socket.send({ command: 'sim/flight_controls/brakes_toggle_max' });
     }
 
     function addOrRemoveClass(element, shouldHaveClass, className) {

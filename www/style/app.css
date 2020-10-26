@@ -65,11 +65,13 @@ button {
     border: 1px solid black;
     border-radius: 3px;
     background-color: #f0f0f0;
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 .control-toggle-button {
-    width: 60px;
-    min-height: 60px;
+    width: 70px;
+    min-height: 70px;
     border-radius: 5px;
     margin: 3px;
     background-color: #d0d0d0;
