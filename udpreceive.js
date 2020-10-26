@@ -112,7 +112,7 @@ function processDataMessage(buffer) {
             }
             return null;
         })
-        .map((message) => _.omit(message, [ 'dataFields']))
+        .map((message) => _.omit(message, [ 'dataFields', 'dataIndex' ]))
         .filter((message) => message != null)
         .value();
 

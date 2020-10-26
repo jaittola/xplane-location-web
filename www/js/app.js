@@ -14,6 +14,8 @@
     var longitude = 0;
     var bearing = 0.0;
 
+    const currentDataValues = {};
+
     function setup() {
         setupSocket();
         setupClearButton();
@@ -113,8 +115,11 @@
 
     function handleData(data) {
         _.forOwn(data, function(value, key) {
-            var handler = handlers[key];
-            if (handler) {
+            const handler = handlers[key];
+            if (handler &&
+                (!currentDataValues.hasOwnProperty(key) || currentDataValues[key] !== value)) {
+                console.log(`Calling handler for ${key} = ${value}`);
+                currentDataValues[key] = value;
                 handler(key, value);
             }
         });
