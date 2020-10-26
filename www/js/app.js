@@ -198,6 +198,10 @@
         'hasRetractingGear': setHasRetractingGear,
         'isGearUnsafe': setIsGearUnsafe,
         'isGearHandleDown': setIsGearHandleDown,
+        'navigation-lights': setToggleButton,
+        'beacon': setToggleButton,
+        'strobe-lights': setToggleButton,
+        'taxi-lights': setToggleButton,
     };
 
     function setNumericalData(key, value) {
@@ -264,7 +268,15 @@
     }
 
     function setIsGearHandleDown(key, value) {
-        const element = document.getElementById('gear-handle');
+        setToggleButtonForElementId('gear-handle', value);
+    }
+
+    function setToggleButton(key, value) {
+        setToggleButtonForElementId(`${key}-button`, value);
+    }
+
+    function setToggleButtonForElementId(elementId, value) {
+        const element = document.getElementById(elementId);
         addOrRemoveClass(element, value, 'control-toggle-button-down');
     }
 

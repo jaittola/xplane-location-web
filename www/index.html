@@ -10,19 +10,35 @@
   <body>
     <div class="main">
       <div class="controls" id="controls">
-        <div class="control-container default-hidden" id="gear-control-container">
-          <button class="control-toggle-button" id="gear-handle">Gear</button>
-          <div class="control-annunciator-container">
-            <div class="control-annunciator-light-label">In transit</div>
-            <div class="control-annunciator-light inactive-red" id="gear-control-annunciator-in-transit"></div>
+        <div class="controls-row">
+          <div class="control-container default-hidden" id="gear-control-container">
+            <button class="control-toggle-button" id="gear-handle">Gear</button>
+            <div class="control-annunciator-container">
+              <div class="control-annunciator-light-label">In transit</div>
+              <div class="control-annunciator-light inactive-red" id="gear-control-annunciator-in-transit"></div>
+            </div>
+            <div class="control-annunciator-container">
+              <div class="control-annunciator-light-label">Down &amp; locked</div>
+              <div class="control-annunciator-light inactive-green" id="gear-control-annunciator-down-and-locked"></div>
+            </div>
           </div>
-          <div class="control-annunciator-container">
-            <div class="control-annunciator-light-label">Down &amp; locked</div>
-            <div class="control-annunciator-light inactive-green" id="gear-control-annunciator-down-and-locked"></div>
+          <div class="control-container" id="parking-brake-container">
+            <button class="control-toggle-button" id="parking-brake-button">Parking<br>Brake</button>
           </div>
         </div>
-        <div class="control-container" id="parking-brake-container">
-          <button class="control-toggle-button" id="parking-brake-button">Parking<br>Brake</button>
+        <div class="controls-row">
+          <div class="control-container" id="navigation-lights-container">
+            <button class="control-toggle-button" id="navigation-lights-button">Nav<br>Lights</button>
+          </div>
+          <div class="control-container" id="beacon-container">
+            <button class="control-toggle-button" id="beacon-button">Beacon</button>
+          </div>
+          <div class="control-container" id="strobe-lights-container">
+            <button class="control-toggle-button" id="strobe-lights-button">Strobe</button>
+          </div>
+          <div class="control-container" id="taxi-lights-container">
+            <button class="control-toggle-button" id="taxi-lights-button">Taxi<br>Lights</button>
+          </div>
         </div>
       </div>
       <div class="data-panel" id="stats">

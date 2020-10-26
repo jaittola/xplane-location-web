@@ -52,6 +52,13 @@ button {
 
 .controls {
     display: flex;
+    flex-flow: column nowrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.controls-row {
+    display: flex;
     flex-flow: row wrap;
     justify-content: flex-start;
     align-items: flex-start;
