@@ -100,7 +100,7 @@ function processDataMessage(buffer) {
             return {
                 dataIndex: data.readInt32LE(0),
                 dataFields: _.chain(_.range(8))
-                    .map((idx) => { return data.readFloatLE((idx + 1) * 4); })
+                    .map((idx) => data.readFloatLE((idx + 1) * 4))
                     .value()
             };
         })
@@ -111,12 +111,12 @@ function processDataMessage(buffer) {
             }
             return null;
         })
-        .map((message) => { return _.omit(message, [ 'dataFields']); })
-        .filter((message) => { return message != null; })
+        .map((message) => _.omit(message, [ 'dataFields']))
+        .filter((message) => message != null)
         .value();
 
     _.forEach(handlers, (handler) => {
-        _.forEach(messages, (msg) => { handler(msg); });
+        _.forEach(messages, handler);
     });
 
     console.log("Messages: " + JSON.stringify(messages, null, 2));
