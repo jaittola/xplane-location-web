@@ -8,13 +8,13 @@ exports.command = (cmd) => performCommand(cmd);
 exports.setDatarefValue = (datarefValue) => setDatarefValue(datarefValue);
 
 server.on('error', (err) => {
-    console.log(`server error:\n${err.stack}`);
+    debug(`server error:\n${err.stack}`);
     server.close();
 });
 
 server.bind(49008, () => {
     var address = server.address();
-    console.log(`Listening to UDP at ${address.address}:${address.port}`);
+    debug(`Listening to UDP at ${address.address}:${address.port}`);
 });
 
 server.on('message', processMessage)
@@ -122,7 +122,7 @@ const datarefsByID = _.chain(datarefs)
 const datarefsByTarget = _.keyBy(datarefs, (dr) => dr.target);
 
 function processMessage(msg, rinfo) {
-    console.log(`server got: ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
+    debug(`server got: ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
     xplaneAddress = {
         address: rinfo.address,
         port: rinfo.port,
@@ -133,15 +133,15 @@ function processMessage(msg, rinfo) {
         processDataMessage(msg.slice(5));
         break;
     case DREFHDR:
-        console.log("Got dataref");
-        console.log("Message content is ", msg.slice(5).toString());
+        debug("Got dataref");
+        debug("Message content is ", msg.slice(5).toString());
         break;
     case RREFHDR:
         processRrefMessage(msg.slice(5));
         break;
     default:
-        console.log("Unknown message, will skip. Type is", msgtype);
-        console.log("Message content is ", msg.slice(5).toString());
+        debug("Unknown message, will skip. Type is", msgtype);
+        debug("Message content is ", msg.slice(5).toString());
         break;
                           }
 
@@ -184,7 +184,7 @@ function processDataMessage(buffer) {
         _.forEach(messages, handler);
     });
 
-    console.log("Messages: " + JSON.stringify(messages, null, 2));
+    debug("Messages: " + JSON.stringify(messages, null, 2));
 }
 
 const messageParsers = {
@@ -273,18 +273,18 @@ function processRref(buffer) {
         const length = datarefDetails.length || 4;
         if (datarefDetails.parse) {
             const result = datarefDetails.parse(buffer.slice(4, 4 + length), datarefDetails)
-            console.log("Got Dataref", datarefID, datarefDetails.name, result, buffer.toString('hex'));
+            debug("Got Dataref", datarefID, datarefDetails.name, result, buffer.toString('hex'));
             handlers.forEach(handler => {
                 handler(result);
             });
         } else {
-            console.log("Got dataref", datarefID, datarefDetails ? datarefDetails.name : 'unknown',
+            debug("Got dataref", datarefID, datarefDetails ? datarefDetails.name : 'unknown',
                         "raw content", buffer.slice(4).toString('hex'));
         }
         return buffer.length > 4 + length ?
             buffer.slice(4 + length) : undefined;
     } else {
-        console.log(`Got dataref with local ID ${datarefID} for which I have no handler`);
+        debug(`Got dataref with local ID ${datarefID} for which I have no handler`);
         // TODO, cancel this dataref.
         return undefined;
     }
@@ -302,7 +302,7 @@ function requestDatarefs() {
               msg.writeInt32LE(1, offset(0));
               msg.writeInt32LE(Number(key), offset(1));
               msg.write(value.name, offset(2));
-              console.log(`Dataref request message: ${value.name} with key ${key}`);
+              debug(`Dataref request message: ${value.name} with key ${key}`);
               return msg;
           });
 
@@ -312,7 +312,7 @@ function requestDatarefs() {
             return;
         }
 
-        console.log(`Sending dataref request message ${msg.toString()}`);
+        debug(`Sending dataref request message ${msg.toString()}`);
         sendToXPlane(msg, () => {
             setTimeout(() => {
                 sendMessage(nth + 1)
@@ -332,14 +332,14 @@ function performCommand(cmd) {
     const cmdValue = cmd.command;
 
     if (!cmdValue) {
-        console.log("No command at performCommand. Ignoring.");
+        debug("No command at performCommand. Ignoring.");
         return;
     }
 
     const msg = Buffer.alloc(CMDHDR.length + cmdValue.length + 1);
     msg.write(CMDHDR);
     msg.write(cmdValue, CMDHDR.length);
-    console.log(`Sending command message to server ${msg.toString()}`);
+    debug(`Sending command message to server ${msg.toString()}`);
     sendToXPlane(msg);
 }
 
@@ -357,7 +357,7 @@ function setDatarefValue(datarefValue) {
     }
     if (datarefPathOffset) {
         msg.write(dataref.name, datarefPathOffset);
-        console.log(`Sending set dataref to xplane: ${msg.toString()} ${msg.toString('hex')}`);
+        debug(`Sending set dataref to xplane: ${msg.toString()} ${msg.toString('hex')}`);
         sendToXPlane(msg);
     }
 }
@@ -365,11 +365,19 @@ function setDatarefValue(datarefValue) {
 function sendToXPlane(buffer, onSuccess) {
     server.send(buffer, 49000, xplaneAddress.address, (err) => {
         if (err) {
-            console.log("Sending to XPlane failed", err);
+            debug("Sending to XPlane failed", err);
             return;
         }
         if (onSuccess) {
             onSuccess();
         }
     });
+}
+
+const debugging = false;
+
+function debug(...args) {
+    if (debugging) {
+        console.log(...args)
+    }
 }
