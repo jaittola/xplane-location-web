@@ -20,7 +20,12 @@ udpreceive.onData((message) => { io.emit('data', message); });
 
 io.on('connection', function(socket) {
 //    socket.emit('setup', { 'key': mapsKey });
-    socket.on('message', (data) => { udpreceive.command(data) });
+    socket.on('message', (data) => {
+        if (data.hasOwnProperty('command'))
+            udpreceive.command(data);
+        else if (data.hasOwnProperty('setDatarefValue'))
+            udpreceive.setDatarefValue(data.setDatarefValue)
+    });
 });
 
 

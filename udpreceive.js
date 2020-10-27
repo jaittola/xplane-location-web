@@ -3,8 +3,9 @@ const server = dgram.createSocket('udp4');
 
 const _ = require('lodash');
 
-exports.onData = (handler) => { handlers.push(handler); }
-exports.command = (cmd) => { performCommand(cmd); }
+exports.onData = (handler) => handlers.push(handler);
+exports.command = (cmd) => performCommand(cmd);
+exports.setDatarefValue = (datarefValue) => setDatarefValue(datarefValue);
 
 server.on('error', (err) => {
     console.log(`server error:\n${err.stack}`);
@@ -25,54 +26,100 @@ const DATA_MSG_LEN = 9 * 4;
 const DATAHDR = "DATA";
 const DREFHDR = 'DREF';
 const RREFHDR = 'RREF';
+const CMDHDR  = "CMND0";
 
 let xplaneAddress = undefined;
 let datarefTimer = undefined;
 
 const datarefs = [
-    { name: 'sim/aircraft/gear/acf_gear_retract',
-      parse: parseBoolean,
-      target: 'hasRetractingGear',
+    {
+        name: 'sim/aircraft/gear/acf_gear_retract',
+        parse: parseBoolean,
+        target: 'hasRetractingGear',
     },
-    { name: 'sim/cockpit2/annunciators/gear_unsafe',
-      parse: parseBoolean,
-      target: 'isGearUnsafe',
+    {
+        name: 'sim/cockpit2/annunciators/gear_unsafe',
+        parse: parseBoolean,
+        target: 'isGearUnsafe',
     },
-    { name: 'sim/cockpit2/controls/gear_handle_down',
-      parse: parseBoolean,
-      target: 'isGearHandleDown',
+    {
+        name: 'sim/cockpit2/controls/gear_handle_down',
+        parse: parseBoolean,
+        target: 'isGearHandleDown',
     },
-    { name: 'sim/cockpit2/controls/parking_brake_ratio',
-      parse: parseParkingBrakeRatio,
+    {
+        name: 'sim/cockpit2/controls/parking_brake_ratio',
+        parse: parseParkingBrakeRatio,
     },
-    { name: 'sim/cockpit2/switches/avionics_power_on',
-      parse: parseBoolean,
-      target: 'avionics-master',
+    {
+        name: 'sim/cockpit2/switches/avionics_power_on',
+        parse: parseBoolean,
+        target: 'avionics-master',
     },
-    { name: 'sim/cockpit2/switches/navigation_lights_on',
-      parse: parseBoolean,
-      target: 'navigation-lights',
+    {
+        name: 'sim/cockpit2/switches/navigation_lights_on',
+        parse: parseBoolean,
+        target: 'navigation-lights',
     },
-    { name: 'sim/cockpit2/switches/beacon_on',
-      parse: parseBoolean,
-      target: 'beacon',
+    {
+        name: 'sim/cockpit2/switches/beacon_on',
+        parse: parseBoolean,
+        target: 'beacon',
     },
-    { name: 'sim/cockpit2/switches/strobe_lights_on',
-      parse: parseBoolean,
-      target: 'strobe-lights',
+    {
+        name: 'sim/cockpit2/switches/strobe_lights_on',
+        parse: parseBoolean,
+        target: 'strobe-lights',
     },
-    // Landing lights, landing_lights_switch float[16] TODO
-    { name: 'sim/cockpit2/switches/taxi_light_on',
-      parse: parseBoolean,
-      target: 'taxi-lights',
+    {
+        name: 'sim/cockpit2/switches/taxi_light_on',
+        parse: parseBoolean,
+        target: 'taxi-lights',
+    },
+    {
+        name: 'sim/cockpit2/switches/landing_lights_switch[0]',
+        parse: parseBoolean,
+        target: 'landing-lights-0',
+    },
+    {
+        name: 'sim/cockpit2/switches/landing_lights_switch[1]',
+        parse: parseBoolean,
+        target: 'landing-lights-1'
+    },
+    {
+        name: 'sim/cockpit2/switches/panel_brightness_ratio[0]',
+        parse: parseBoolean,
+        target: 'panel-lights-0'
+    },
+    {
+        name: 'sim/cockpit2/switches/panel_brightness_ratio[1]',
+        parse: parseBoolean,
+        target: 'panel-lights-1'
+    },
+    {
+        name: 'sim/cockpit2/switches/panel_brightness_ratio[2]',
+        parse: parseBoolean,
+        target: 'panel-lights-2'
+    },
+    {
+        name: 'sim/cockpit2/switches/panel_brightness_ratio[3]',
+        parse: parseBoolean,
+        target: 'panel-lights-3'
+    },
+    {
+        name: 'sim/aircraft/engine/acf_num_engines',
+        parse: parseNumber,
+        target: 'number-of-engines',
     },
 ];
 
-const datarefIDs = _.chain(datarefs)
+const datarefsByID = _.chain(datarefs)
       .map((value, idx) => [value, idx])
       .keyBy(([value, idx]) => idx)
       .mapValues(([value, idx]) => value)
       .value();
+
+const datarefsByTarget = _.keyBy(datarefs, (dr) => dr.target);
 
 function processMessage(msg, rinfo) {
     console.log(`server got: ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
@@ -193,9 +240,16 @@ function parseLatLonAltitude(message) {
 }
 
 function parseBoolean(buffer, dataref) {
-    const intVal = buffer.readInt32LE(0);
+    const numericVal = buffer.readFloatLE();
     return {
-        [dataref.target]: !!intVal,
+        [dataref.target]: !!numericVal,
+    }
+}
+
+function parseNumber(buffer, dataref) {
+    const numericVal = buffer.readFloatLE();
+    return {
+        [dataref.target]: numericVal,
     }
 }
 
@@ -214,18 +268,18 @@ function processRrefMessage(buffer) {
 
 function processRref(buffer) {
     const datarefID = buffer.readInt32LE(0);
-    const datarefDetails = datarefIDs[datarefID]
+    const datarefDetails = datarefsByID[datarefID]
     if (datarefDetails) {
         const length = datarefDetails.length || 4;
         if (datarefDetails.parse) {
             const result = datarefDetails.parse(buffer.slice(4, 4 + length), datarefDetails)
-            console.log("Got Dataref", datarefID, datarefDetails.name, result);
+            console.log("Got Dataref", datarefID, datarefDetails.name, result, buffer.toString('hex'));
             handlers.forEach(handler => {
                 handler(result);
             });
         } else {
             console.log("Got dataref", datarefID, datarefDetails ? datarefDetails.name : 'unknown',
-                        "raw content", buffer.slice(4, 4 + length).toString('hex'));
+                        "raw content", buffer.slice(4).toString('hex'));
         }
         return buffer.length > 4 + length ?
             buffer.slice(4 + length) : undefined;
@@ -241,7 +295,7 @@ function requestDatarefs() {
         return;
     }
 
-    const messages = Object.entries(datarefIDs)
+    const messages = Object.entries(datarefsByID)
           .map(([key, value]) => {
               const msg = Buffer.alloc(413);
               msg.write(RREFHDR);
@@ -275,7 +329,6 @@ function offset(item) {
 }
 
 function performCommand(cmd) {
-    const cmdhdr = "CMND0";
     const cmdValue = cmd.command;
 
     if (!cmdValue) {
@@ -283,11 +336,30 @@ function performCommand(cmd) {
         return;
     }
 
-    const msg = Buffer.alloc(cmdhdr.length + cmdValue.length + 1);
-    msg.write(cmdhdr);
-    msg.write(cmdValue, cmdhdr.length);
+    const msg = Buffer.alloc(CMDHDR.length + cmdValue.length + 1);
+    msg.write(CMDHDR);
+    msg.write(cmdValue, CMDHDR.length);
     console.log(`Sending command message to server ${msg.toString()}`);
     sendToXPlane(msg);
+}
+
+function setDatarefValue(datarefValue) {
+    let datarefDataOffset = 5
+    let datarefPathOffset = 0;
+    const dataref = datarefsByTarget[datarefValue.name];
+    if (!dataref) {
+        return;
+    }
+    const msg = Buffer.alloc(509);
+    msg.write(DREFHDR);
+    if (datarefValue.hasOwnProperty('floatValue')) {
+        datarefPathOffset = msg.writeFloatLE(datarefValue.floatValue, datarefDataOffset);
+    }
+    if (datarefPathOffset) {
+        msg.write(dataref.name, datarefPathOffset);
+        console.log(`Sending set dataref to xplane: ${msg.toString()} ${msg.toString('hex')}`);
+        sendToXPlane(msg);
+    }
 }
 
 function sendToXPlane(buffer, onSuccess) {

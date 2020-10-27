@@ -185,6 +185,20 @@
 
         document.getElementById('gear-handle').addEventListener('click', toggleGear);
         document.getElementById('parking-brake-button').addEventListener('click', toggleParkingBrake);
+        document.getElementById('taxi-lights-button')
+            .addEventListener('click', () => toggleValue('taxi-lights'));;
+        document.getElementById('navigation-lights-button')
+            .addEventListener('click', () => toggleValue('navigation-lights'));;
+        document.getElementById('beacon-button')
+            .addEventListener('click', () => toggleValue('beacon'));;
+        document.getElementById('strobe-lights-button')
+            .addEventListener('click', () => toggleValue('strobe-lights'));;
+        document.getElementById('taxi-lights-button')
+            .addEventListener('click', () => toggleValue('taxi-lights'));;
+        document.getElementById('landing-lights-0-button')
+            .addEventListener('click', () => toggleValue('landing-lights-0'));;
+        document.getElementById('landing-lights-1-button')
+            .addEventListener('click', () => toggleValue('landing-lights-1'));;
     }
 
     var handlers = {
@@ -202,6 +216,8 @@
         'beacon': setToggleButton,
         'strobe-lights': setToggleButton,
         'taxi-lights': setToggleButton,
+        'landing-lights-0': setToggleButton,
+        'landing-lights-1': setToggleButton,
     };
 
     function setNumericalData(key, value) {
@@ -259,7 +275,7 @@
 
     function setHasRetractingGear(key, value) {
         const element = document.getElementById('gear-control-container');
-        addOrRemoveClass(element, value, 'default-hidden');
+        element.style.display = value ? 'flex' : 'none';
     }
 
     function setIsGearUnsafe(key, value) {
@@ -286,6 +302,14 @@
 
     function toggleParkingBrake() {
         socket.send({ command: 'sim/flight_controls/brakes_toggle_max' });
+    }
+
+    function toggleValue(key) {
+        if (!currentDataValues.hasOwnProperty(key)) {
+            return;
+        }
+        socket.send({ setDatarefValue: { name: key,
+                                         floatValue: currentDataValues[key] === true ? 0 : 1 }});
     }
 
     function addOrRemoveClass(element, shouldHaveClass, className) {
