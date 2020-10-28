@@ -16,6 +16,24 @@
 
     const currentDataValues = {};
 
+    const commands = {
+        toggleGear: 'sim/flight_controls/landing_gear_toggle',
+        toggleParkingBrake: 'sim/flight_controls/brakes_toggle_max',
+        toggleTaxiLights: 'sim/lights/taxi_lights_toggle',
+        toggleNavLights: 'sim/lights/nav_lights_toggle',
+        toggleStrobe: 'sim/lights/strobe_lights_toggle',
+        toggleBeacon: 'sim/lights/beacon_lights_toggle',
+        toggleLanding1: 'sim/lights/landing_01_light_tog',
+        toggleLanding2: 'sim/lights/landing_02_light_tog',
+        toggleLanding3: 'sim/lights/landing_03_light_tog',
+        toggleLanding4: 'sim/lights/landing_04_light_tog',
+        togglePitot0: 'sim/ice/pitot_heat0_tog',
+        togglePitot1: 'sim/ice/pitot_heat1_tog',
+        toggleStallWarnHeat: 'sim/ice/AOA_heat0_tog',
+        togglePropHeat: 'sim/ice/prop_heat_tog',
+        toggleWindowHeat: 'sim/ice/window_heat_tog',
+    };
+
     function setup() {
         setupSocket();
         setupClearButton();
@@ -183,22 +201,36 @@
             return
         }
 
-        document.getElementById('gear-handle').addEventListener('click', toggleGear);
-        document.getElementById('parking-brake-button').addEventListener('click', toggleParkingBrake);
+        document.getElementById('gear-handle')
+            .addEventListener('click', () => sendCommand(commands.toggleGear));
+        document.getElementById('parking-brake-button')
+            .addEventListener('click', () => sendCommand(commands.toggleParkingBrake));
         document.getElementById('taxi-lights-button')
-            .addEventListener('click', () => toggleValue('taxi-lights'));;
+            .addEventListener('click', () => sendCommand(commands.toggleTaxiLights));
         document.getElementById('navigation-lights-button')
-            .addEventListener('click', () => toggleValue('navigation-lights'));;
+            .addEventListener('click', () => sendCommand(commands.toggleNavLights));
         document.getElementById('beacon-button')
-            .addEventListener('click', () => toggleValue('beacon'));;
+            .addEventListener('click', () => sendCommand(commands.toggleBeacon));
         document.getElementById('strobe-lights-button')
-            .addEventListener('click', () => toggleValue('strobe-lights'));;
-        document.getElementById('taxi-lights-button')
-            .addEventListener('click', () => toggleValue('taxi-lights'));;
-        document.getElementById('landing-lights-0-button')
-            .addEventListener('click', () => toggleValue('landing-lights-0'));;
+            .addEventListener('click', () => sendCommand(commands.toggleStrobe));
         document.getElementById('landing-lights-1-button')
-            .addEventListener('click', () => toggleValue('landing-lights-1'));;
+            .addEventListener('click', () => sendCommand(commands.toggleLanding1));
+        document.getElementById('landing-lights-2-button')
+            .addEventListener('click', () => sendCommand(commands.toggleLanding2));
+        document.getElementById('landing-lights-3-button')
+            .addEventListener('click', () => sendCommand(commands.toggleLanding3));
+        document.getElementById('landing-lights-4-button')
+            .addEventListener('click', () => sendCommand(commands.toggleLanding4));
+        document.getElementById('pitot-heat-0-button')
+            .addEventListener('click', () => sendCommand(commands.togglePitot0));
+        document.getElementById('pitot-heat-1-button')
+            .addEventListener('click', () => sendCommand(commands.togglePitot1));
+        document.getElementById('stall-warn-heat-button')
+            .addEventListener('click', () => sendCommand(commands.toggleStallWarnHeat));
+        document.getElementById('prop-heat-button')
+            .addEventListener('click', () => sendCommand(commands.togglePropHeat));
+        document.getElementById('window-heat-button')
+            .addEventListener('click', () => sendCommand(commands.toggleWindowHeat));
     }
 
     var handlers = {
@@ -216,8 +248,15 @@
         'beacon': setToggleButton,
         'strobe-lights': setToggleButton,
         'taxi-lights': setToggleButton,
-        'landing-lights-0': setToggleButton,
         'landing-lights-1': setToggleButton,
+        'landing-lights-2': setToggleButton,
+        'landing-lights-3': setToggleButton,
+        'landing-lights-4': setToggleButton,
+        'pitot-heat-0': setToggleButton,
+        'pitot-heat-1': setToggleButton,
+        'stall-warn-heat': setToggleButton,
+        'window-heat': setToggleButton,
+        'prop-heat': setToggleButton,
     };
 
     function setNumericalData(key, value) {
@@ -296,12 +335,8 @@
         addOrRemoveClass(element, value, 'control-toggle-button-down');
     }
 
-    function toggleGear() {
-        socket.send({ command: 'sim/flight_controls/landing_gear_toggle' });
-    }
-
-    function toggleParkingBrake() {
-        socket.send({ command: 'sim/flight_controls/brakes_toggle_max' });
+    function sendCommand(command) {
+        socket.send({ command: command });
     }
 
     function toggleValue(key) {

@@ -79,12 +79,22 @@ const datarefs = [
     {
         name: 'sim/cockpit2/switches/landing_lights_switch[0]',
         parse: parseBoolean,
-        target: 'landing-lights-0',
+        target: 'landing-lights-1',
     },
     {
         name: 'sim/cockpit2/switches/landing_lights_switch[1]',
         parse: parseBoolean,
-        target: 'landing-lights-1'
+        target: 'landing-lights-2'
+    },
+    {
+        name: 'sim/cockpit2/switches/landing_lights_switch[2]',
+        parse: parseBoolean,
+        target: 'landing-lights-3',
+    },
+    {
+        name: 'sim/cockpit2/switches/landing_lights_switch[3]',
+        parse: parseBoolean,
+        target: 'landing-lights-4'
     },
     {
         name: 'sim/cockpit2/switches/panel_brightness_ratio[0]',
@@ -111,6 +121,33 @@ const datarefs = [
         parse: parseNumber,
         target: 'number-of-engines',
     },
+    {
+        name: 'sim/cockpit2/ice/ice_pitot_heat_on_pilot',
+        parse: parseBoolean,
+        target: 'pitot-heat-0',
+    },
+    {
+        name: 'sim/cockpit2/ice/ice_pitot_heat_on_copilot',
+        parse: parseBoolean,
+        target: 'pitot-heat-1',
+    },
+    {
+        name: 'sim/cockpit2/ice/ice_AOA_heat_on',
+        parse: parseBoolean,
+        target: 'stall-warn-heat',
+    },
+    {
+        name: 'sim/cockpit2/ice/ice_prop_heat_on',
+        parse: parseBoolean,
+        target: 'prop-heat',
+    },
+    {
+        name: 'sim/cockpit2/ice/ice_window_heat_on',
+        parse: parseBoolean,
+        target: 'window-heat',
+    },
+    // sim/cockpit2/controls/flap_ratio
+    // sim/cockpit2/annunciators/speedbrake*
 ];
 
 const datarefsByID = _.chain(datarefs)
@@ -374,7 +411,7 @@ function sendToXPlane(buffer, onSuccess) {
     });
 }
 
-const debugging = false;
+const debugging = !!process.env['DEBUG'] || false
 
 function debug(...args) {
     if (debugging) {
