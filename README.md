@@ -1,15 +1,18 @@
 ## Introduction
 
-This application is a simple moving map for the X-Plane flight
-simulator. It shows the position, direction, speed, and track of your
-simulated aircraft on Google Maps in a web browser.
+This application provides some remote controls and
+a simple moving map for the X-Plane flight simulator.
 
-![Screen shot](https://github.com/jaittola/xplane-location-web/raw/master/screenshots/browser-screenshot-2016-01-24.png)
+![Screen shot](https://github.com/jaittola/xplane-location-web/raw/master/screenshots/screenshot-1.png)
+![Screen shot](https://github.com/jaittola/xplane-location-web/raw/master/screenshots/screenshot-2.png)
 
 This application consists of a small server that has been written in
 Node.js. It receives data from X-Plane in UDP datagrams and re-formats
 it into a simple format for the web browser. A web browser app
-displays the data on a map.
+displays the controls and the map.
+
+This application is work in progress and mainly implemented for my
+personal use.
 
 ## Installation
 
@@ -47,7 +50,8 @@ In X-Plane 11,
         port number.  * Close the settings view.
 
 Now you're done! If everything has been set up correctly, the web
-browser should start tracking the position of your simulated aircraft.
+browser should start tracking the position of your simulated aircraft,
+and you should be able to control some electrical switches, too.
 
 ## License
 
