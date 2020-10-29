@@ -6,13 +6,11 @@
     var socket;
     var map;
     var marker;
-    var track = {
-        previousPosition: greenwich(),
-        markers: []
-    };
-    var latitude = 0;
-    var longitude = 0;
-    var bearing = 0.0;
+    var pathOnMap;
+    var previousPathPosition;
+    var latitude;
+    var longitude;
+    var bearing;
 
     const currentDataValues = {};
 
@@ -36,6 +34,7 @@
 
     function setup() {
         setupSocket();
+        setupMap();
         setupClearButton();
         setupDataPanel();
         setupControls();
@@ -50,43 +49,27 @@
         socket.on('data', function(data) {
             handleData(data);
         });
-
-        socket.on('setup', function(data) {
-            setupMap(data);
-        });
     }
 
     function setupMap(data) {
+        if (!document.getElementById('map')) {
+            return;
+        }
+
         if (map) {
             return;
         }
 
-        var script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = "//maps.googleapis.com/maps/api/js?" +
-            "v=3.22&" +
-            "key=" + data.key +
-            "&sensor=false" +
-            "&libraries=visualization,geometry" +
-            "&callback=loadMap";
-
-        window.loadMap = loadMap;
-        document.body.appendChild(script);
-    }
-
-    function loadMap() {
-        map = new google.maps.Map(document.getElementById("map"),
-                                  {
-                                      zoom: 10,
-                                      scaleControl: true,
-                                      center: greenwich(),
-                                      mapTypeId: google.maps.MapTypeId.HYBRID
-                                  });
+        map = L.map('map').setView(greenwich(), 13);
+        L.tileLayer('https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {
+                        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                    }).addTo(map);
     }
 
 
     function greenwich() {
-        return { lat: 51.47, lng: 0 };
+        return [ 51.47, 0.0 ];
     }
 
     function setupClearButton() {
@@ -125,10 +108,14 @@
     }
 
     function clearTrackMarkers() {
-        track.markers.forEach(function(marker) {
-            marker.setMap(null);
-        });
-        track.markers = [];
+        if (!pathOnMap ||
+            latitude === undefined ||
+            longitude === undefined ||
+            bearing === undefined) {
+            return;
+        }
+
+        pathOnMap.setLatLngs([L.latLng(latitude, longitude)]);
     }
 
     function handleData(data) {
@@ -145,53 +132,36 @@
     }
 
     function updatePositionMarker() {
-        if (!map) {
+        if (!map ||
+            latitude === undefined ||
+            longitude === undefined ||
+            bearing === undefined) {
             return;
         }
 
-        var position = {lat: latitude, lng: longitude};
 
-        map.setCenter(position);
+        var position = L.latLng(latitude, longitude);
+        map.panTo(position);
 
-        if (!marker) {
-            marker = new google.maps.Marker({
-                position: position,
-                map: map
-            });
+        if (marker) {
+            marker.setLatLng(position);
+        } else {
+            marker = L.marker(position,
+                              {
+                                  icon: L.divIcon({className: 'position-marker',
+                                                   iconSize: [20, 20]}),
+                                  opacity: 0.8,
+                              }).addTo(map);
+            pathOnMap = L.polyline([position], { color: 'red' }).addTo(map);
+            previousPathPosition = position;
         }
-        else {
-            marker.setPosition(position);
-        }
-        marker.setIcon(makeDirectionSymbol(bearing));
 
-        updatePath(position);
-    }
+        marker.setRotationAngle(Math.round(bearing));
+        marker.setRotationOrigin('center');
 
-    function makeDirectionSymbol(bearing) {
-        return {
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 3,
-            rotation: Number(bearing),
-            fillColor: "#ff0000",
-            strokeColor: "#ff0000",
-        };
-    }
-
-    function updatePath(currentPosition) {
-        var p1 = new google.maps.LatLng(currentPosition);
-        var p2 = new google.maps.LatLng(track.previousPosition);
-        var distance = google.maps.geometry
-            .spherical
-            .computeDistanceBetween(p1, p2);
-        if (distance > 30) {
-            track.previousPosition = currentPosition;
-            var marker = new google.maps.Marker({
-                position: currentPosition,
-                map: map,
-                title: 'Path',
-                icon: '/images/track-marker.png'
-            });
-            track.markers.push(marker);
+        if (previousPathPosition && previousPathPosition.distanceTo(position) > 200) {
+            pathOnMap.addLatLng(position);
+            previousPathPosition = position;
         }
     }
 
@@ -314,7 +284,9 @@
 
     function setHasRetractingGear(key, value) {
         const element = document.getElementById('gear-control-container');
-        element.style.display = value ? 'flex' : 'none';
+        if (element) {
+            element.style.display = value ? 'flex' : 'none';
+        }
     }
 
     function setIsGearUnsafe(key, value) {
@@ -348,6 +320,9 @@
     }
 
     function addOrRemoveClass(element, shouldHaveClass, className) {
+        if (!element) {
+            return;
+        }
         if (shouldHaveClass) {
             element.classList.add(className);
         } else {

@@ -133,3 +133,9 @@ button {
 .not-shown {
     display: none;
 }
+
+.position-marker {
+    width: 20px;
+    height: 20px;
+    background-image: url("../images/position.svg");
+}

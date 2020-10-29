@@ -14,15 +14,11 @@ displays the data on a map.
 ## Installation
 
 * Clone this repository using git.
-* Follow the instructions at
-  <https://developers.google.com/maps/documentation/javascript/get-api-key?hl=en#key>
-  to obtain a Google Maps API key.
-* Add the Maps API key that you obtained from Google to your
-  environment by running `export GOOGLE_MAPS_KEY="apikey"` (or
-  equivalent, depending on your shell environment).
-* Install [npm](https://www.npmjs.com/) for your platform. For Mac OS
-  X, I recommend using [Homebrew](http://brew.sh/) for installing.
+* Install [npm](https://www.npmjs.com/) for your platform.
 * To download the dependencies, run `npm install`
+* If you are running on Windows, go to `www/components` and
+  replace the symbolic links with copies of respective files from
+  `../../node_modules/`. Setting up these files should be scripted.
 * To start the server, run `npm start`
 * Point your browser to http://localhost:3001 (or to the IP address in
   which your are running the server).
@@ -62,3 +58,9 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+The map library, Leaflet, bears its own copyright. See https://github.com/Leaflet/Leaflet/blob/master/LICENSE for details.
+
+The code rotates the location marker using the Leaflet RotatedMarker plugin. Its license is at https://github.com/bbecquet/Leaflet.RotatedMarker/blob/master/LICENSE .
+
+Map data © OpenStreetMap contributors. See https://www.openstreetmap.org/copyright or https://www.opendatacommons.org/licenses/odbl .
