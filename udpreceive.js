@@ -316,7 +316,7 @@ function processRref(buffer) {
             });
         } else {
             debug("Got dataref", datarefID, datarefDetails ? datarefDetails.name : 'unknown',
-                        "raw content", buffer.slice(4).toString('hex'));
+                  "raw content", buffer.slice(4).toString('hex'));
         }
         return buffer.length > 4 + length ?
             buffer.slice(4 + length) : undefined;

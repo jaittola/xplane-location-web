@@ -120,12 +120,18 @@
 
     function handleData(data) {
         _.forOwn(data, function(value, key) {
-            const handler = handlers[key];
-            if (handler &&
-                (!currentDataValues.hasOwnProperty(key) || currentDataValues[key] !== value)) {
-                console.log(`Calling handler for ${key} = ${value}`);
-                currentDataValues[key] = value;
-                handler(key, value);
+            if (!currentDataValues.hasOwnProperty(key) || currentDataValues[key] !== value) {
+                const staticHandler = staticHandlers[key];
+                if (staticHandler) {
+                    console.log(`Calling handler for ${key} = ${value}`);
+                    currentDataValues[key] = value;
+                    staticHandler(key, value);
+                }
+                handlers.forEach(({ dataKey, updateValue }) => {
+                    if (dataKey === key) {
+                        updateValue(value);
+                    }
+                });
             }
         });
         updatePositionMarker();
@@ -173,61 +179,148 @@
 
         document.getElementById('gear-handle')
             .addEventListener('click', () => sendCommand(commands.toggleGear));
-        document.getElementById('parking-brake-button')
-            .addEventListener('click', () => sendCommand(commands.toggleParkingBrake));
-        document.getElementById('taxi-lights-button')
-            .addEventListener('click', () => sendCommand(commands.toggleTaxiLights));
-        document.getElementById('navigation-lights-button')
-            .addEventListener('click', () => sendCommand(commands.toggleNavLights));
-        document.getElementById('beacon-button')
-            .addEventListener('click', () => sendCommand(commands.toggleBeacon));
-        document.getElementById('strobe-lights-button')
-            .addEventListener('click', () => sendCommand(commands.toggleStrobe));
-        document.getElementById('landing-lights-1-button')
-            .addEventListener('click', () => sendCommand(commands.toggleLanding1));
-        document.getElementById('landing-lights-2-button')
-            .addEventListener('click', () => sendCommand(commands.toggleLanding2));
-        document.getElementById('landing-lights-3-button')
-            .addEventListener('click', () => sendCommand(commands.toggleLanding3));
-        document.getElementById('landing-lights-4-button')
-            .addEventListener('click', () => sendCommand(commands.toggleLanding4));
-        document.getElementById('pitot-heat-0-button')
-            .addEventListener('click', () => sendCommand(commands.togglePitot0));
-        document.getElementById('pitot-heat-1-button')
-            .addEventListener('click', () => sendCommand(commands.togglePitot1));
-        document.getElementById('stall-warn-heat-button')
-            .addEventListener('click', () => sendCommand(commands.toggleStallWarnHeat));
-        document.getElementById('prop-heat-button')
-            .addEventListener('click', () => sendCommand(commands.togglePropHeat));
-        document.getElementById('window-heat-button')
-            .addEventListener('click', () => sendCommand(commands.toggleWindowHeat));
+
+        const toggleButtons = [
+            {
+                rowId: 'controls-row-0',
+                buttons: [
+                    {
+                        incomingDataKey: 'parking-brake',
+                        outgoingToggleCommand: commands.toggleParkingBrake,
+                        buttonText: 'Parking Brake',
+                        isButtonPressed: (receivedValue) => receivedValue === 'Engaged'
+                  }
+                ]
+            },
+            {
+                rowId: 'controls-row-1',
+                buttons: [
+                    {
+                        incomingDataKey: 'navigation-lights',
+                        outgoingToggleCommand: commands.toggleNavLights,
+                        buttonText: 'Nav Lights',
+                    },
+                    {
+                        incomingDataKey: 'beacon',
+                        outgoingToggleCommand: commands.toggleBeacon,
+                        buttonText: 'Beacon',
+                    },
+                    {
+                        incomingDataKey: 'strobe-lights',
+                        outgoingToggleCommand: commands.toggleStrobe,
+                        buttonText: 'Strobe',
+                    },
+                    {
+                        incomingDataKey: 'taxi-lights',
+                        outgoingToggleCommand: commands.toggleTaxiLights,
+                        buttonText: 'Taxi lights',
+                    },
+                    {
+                        incomingDataKey: 'landing-lights-1',
+                        outgoingToggleCommand: commands.toggleLanding1,
+                        buttonText: 'Ldg Light',
+                    },
+
+                    {
+                        incomingDataKey: 'landing-lights-2',
+                        outgoingToggleCommand: commands.toggleLanding2,
+                        buttonText: 'Ldg Light',
+                    },
+
+                    {
+                        incomingDataKey: 'landing-lights-3',
+                        outgoingToggleCommand: commands.toggleLanding3,
+                        buttonText: 'Ldg Light',
+                    },
+
+                    {
+                        incomingDataKey: 'landing-lights-4',
+                        outgoingToggleCommand: commands.toggleLanding4,
+                        buttonText: 'Ldg Light',
+                    },
+                ]
+            },
+            {
+                rowId: 'controls-row-2',
+                buttons: [
+                    {
+                        incomingDataKey: 'pitot-heat-0',
+                        outgoingToggleCommand: commands.togglePitot0,
+                        buttonText: 'Pitot Heat',
+                    },
+                    {
+                        incomingDataKey: 'pitot-heat-1',
+                        outgoingToggleCommand: commands.togglePitot1,
+                        buttonText: 'Pitot Heat',
+                    },
+                    {
+                        incomingDataKey: 'stall-warn-heat',
+                        outgoingToggleCommand: commands.toggleStallWarnHeat,
+                        buttonText: 'Stall Warn',
+                    },
+                    {
+                        incomingDataKey: 'prop-heat',
+                        outgoingToggleCommand: commands.togglePropHeat,
+                        buttonText: 'Prop Heat',
+                    },
+                    {
+                        incomingDataKey: 'window-heat',
+                        outgoingToggleCommand: commands.toggleWindowHeat,
+                        buttonText: 'Window Heat',
+                    },
+
+                ],
+            },
+        ];
+
+        toggleButtons.forEach(({ rowId, buttons }) =>
+                              buttons.forEach((button) => setupToggleButton(rowId,
+                                                                            button)));
     }
 
-    var handlers = {
+    var staticHandlers = {
         'velocity': setNumericalData,
         'heading': setHeading,
         'altitude': setNumericalData,
         'lat': setLatitude,
         'lon': setLongitude,
         'gear': setGear,
-        'parking-brake': setParkingBrake,
         'hasRetractingGear': setHasRetractingGear,
         'isGearUnsafe': setIsGearUnsafe,
         'isGearHandleDown': setIsGearHandleDown,
-        'navigation-lights': setToggleButton,
-        'beacon': setToggleButton,
-        'strobe-lights': setToggleButton,
-        'taxi-lights': setToggleButton,
-        'landing-lights-1': setToggleButton,
-        'landing-lights-2': setToggleButton,
-        'landing-lights-3': setToggleButton,
-        'landing-lights-4': setToggleButton,
-        'pitot-heat-0': setToggleButton,
-        'pitot-heat-1': setToggleButton,
-        'stall-warn-heat': setToggleButton,
-        'window-heat': setToggleButton,
-        'prop-heat': setToggleButton,
     };
+
+    var handlers = [];
+
+    function setupToggleButton(containerId,
+                               buttonDetails) {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.log(`Requested container element ${containerId} not found`);
+            return;
+        }
+        const element = document.createElement('button');
+        const buttonId = buttonDetails.buttonId || `${buttonDetails.incomingDataKey}-button`;
+        element.id = buttonId;
+        element.classList.add('control-toggle-button');
+        element.append(document.createTextNode(buttonDetails.buttonText));
+        element.addEventListener('click', () => sendCommand(buttonDetails.outgoingToggleCommand));
+        handlers.push({ dataKey: buttonDetails.incomingDataKey,
+                        updateValue:
+                        (value) => setToggleButtonForElementId(buttonId,
+                                                               buttonDetails.isButtonPressed === undefined ?
+                                                               value :
+                                                               buttonDetails.isButtonPressed(value))
+                      });
+        container.append(wrapIntoFrame(element));
+    }
+
+    function wrapIntoFrame(element) {
+        const frame = document.createElement('div');
+        frame.classList.add('control-container');
+        frame.append(element);
+        return frame;
+    }
 
     function setNumericalData(key, value) {
         var property = "data-" + key;
@@ -269,12 +362,6 @@
         }
     }
 
-    function setParkingBrake(key, value) {
-        setText(key, value);
-        const element = document.getElementById('parking-brake-button')
-        addOrRemoveClass(element, value == 'Engaged', 'control-toggle-button-down');
-    }
-
     function setGear(key, value) {
         setText(key, value);
         // TODO, the annunciator should look at gear deployment values.
@@ -296,10 +383,6 @@
 
     function setIsGearHandleDown(key, value) {
         setToggleButtonForElementId('gear-handle', value);
-    }
-
-    function setToggleButton(key, value) {
-        setToggleButtonForElementId(`${key}-button`, value);
     }
 
     function setToggleButtonForElementId(elementId, value) {
