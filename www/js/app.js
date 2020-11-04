@@ -236,7 +236,8 @@
                         outgoingToggleCommand: commands.toggleLanding2,
                         buttonText: 'Ldg Light',
                     },
-
+                    /* Baron has two landing lights. Remove these for now.
+                       Useful for large aircraft like the B738.
                     {
                         incomingDataKey: 'landing-lights-3',
                         outgoingToggleCommand: commands.toggleLanding3,
@@ -248,6 +249,7 @@
                         outgoingToggleCommand: commands.toggleLanding4,
                         buttonText: 'Ldg Light',
                     },
+                    */
                 ]
             },
             {
