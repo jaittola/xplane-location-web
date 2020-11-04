@@ -30,6 +30,16 @@
         toggleStallWarnHeat: 'sim/ice/AOA_heat0_tog',
         togglePropHeat: 'sim/ice/prop_heat_tog',
         toggleWindowHeat: 'sim/ice/window_heat_tog',
+        servosOff: 'sim/autopilot/servos_toggle',
+        toggleFlightDirector: 'sim/autopilot/fdir_toggle',
+        setAutopilotHeadingMode: 'sim/autopilot/heading',
+        setAutopilotNavMode: 'sim/autopilot/NAV',
+        setAutopilotAltMode: 'sim/autopilot/altitude_hold',
+        setAutopilotApproachMode: 'sim/autopilot/approach',
+        setAutopilotBackCourseMode: 'sim/autopilot/back_course',
+        toggleYawDamper: 'sim/systems/yaw_damper_toggle',
+        noseUp: 'sim/autopilot/nose_up_pitch_mode',
+        noseDown: 'sim/autopilot/nose_down_pitch_mode',
     };
 
     function setup() {
@@ -268,9 +278,65 @@
                         outgoingToggleCommand: commands.toggleWindowHeat,
                         buttonText: 'Window Heat',
                     },
+                ],
+            },
+            {
+                rowId: 'controls-row-3',
+                buttons: [
+                    {
+                        incomingDataKey: 'autopilot-engaged',
+                        outgoingToggleCommand: commands.servosOff,
+                        buttonText: 'AP disco',
+                    },
+                    {
+                        incomingDataKey: 'flightdirector-engaged',
+                        outgoingToggleCommand: commands.toggleFlightDirector,
+                        buttonText: 'Flight dir',
+                    },
+                    {
+                        incomingDataKey: 'autopilot-heading-mode',
+                        outgoingToggleCommand: commands.setAutopilotHeadingMode,
+                        buttonText: 'AP HDG',
+                    },
+                    {
+                        incomingDataKey: 'autopilot-nav-mode',
+                        outgoingToggleCommand: commands.setAutopilotNavMode,
+                        buttonText: 'AP NAV',
+                    },
+                    {
+                        incomingDataKey: 'autopilot-alt-mode',
+                        outgoingToggleCommand: commands.setAutopilotAltMode,
+                        buttonText: 'AP ALT',
+                    },
+                    {
+                        incomingDataKey: 'autopilot-approach-mode',
+                        outgoingToggleCommand: commands.setAutopilotApproachMode,
+                        buttonText: 'AP APP',
+                    },
+                    {
+                        incomingDataKey: 'autopilot-back-course-mode',
+                        outgoingToggleCommand: commands.setAutopilotBackCourseMode,
+                        buttonText: 'AP BC',
+                    },
+                    {
+                        incomingDataKey: 'yaw-damper',
+                        outgoingToggleCommand: commands.toggleYawDamper,
+                        buttonText: 'Yaw damper',
+                    },
+                    {
+                        incomingDataKey: '',
+                        outgoingToggleCommand: commands.noseUp,
+                        buttonText: 'VS Down',
+                    },
+                    {
+                        incomingDataKey: '',
+                        outgoingToggleCommand: commands.noseDown,
+                        buttonText: 'VS Down',
+                    }
 
                 ],
             },
+
         ];
 
         toggleButtons.forEach(({ rowId, buttons }) =>

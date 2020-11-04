@@ -146,6 +146,41 @@ const datarefs = [
         parse: parseBoolean,
         target: 'window-heat',
     },
+    {
+        name: 'sim/cockpit2/autopilot/flight_director_mode',
+        parse: parseAutopilotMode,
+        target: 'autopilot-engaged',
+    },
+    {
+        name: 'sim/cockpit2/autopilot/heading_mode',
+        parse: parseBoolean,
+        target: 'autopilot-heading-mode',
+    },
+    {
+        name: 'sim/cockpit2/autopilot/altitude_hold_status',
+        parse: parseBoolean,
+        target: 'autopilot-alt-mode',
+    },
+    {
+        name: 'sim/cockpit2/autopilot/glideslope_armed',
+        parse: parseBoolean,
+        target: 'autopilot-approach-mode',
+    },
+    {
+        name: 'sim/cockpit2/autopilot/hnav_armed',
+        parse: parseBoolean,
+        target: 'autopilot-nav-mode',
+    },
+    {
+        name: 'sim/cockpit2/autopilot/backcourse_on',
+        parse: parseBoolean,
+        target: 'autopilot-back-course-mode',
+    },
+    {
+        name: 'sim/cockpit2/switches/yaw_damper_on',
+        parse: parseBoolean,
+        target: 'yaw-damper',
+    },
     // sim/cockpit2/controls/flap_ratio
     // sim/cockpit2/annunciators/speedbrake*
 ];
@@ -297,6 +332,13 @@ function parseParkingBrakeRatio(buffer) {
     };
 }
 
+function parseAutopilotMode(buffer, dataref) {
+    const ap = buffer.readFloatLE();
+    return {
+        [dataref.target]: ap == 2.0,
+        'flightdirector-engaged': ap > 0,
+    }
+}
 
 function processRrefMessage(buffer) {
     let rest = buffer
