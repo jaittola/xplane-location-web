@@ -288,7 +288,7 @@
                     {
                         incomingDataKey: 'autopilot-engaged',
                         outgoingToggleCommand: commands.servosOff,
-                        buttonText: 'AP disco',
+                        buttonText: 'AP eng',
                     },
                     {
                         incomingDataKey: 'flightdirector-engaged',
@@ -328,12 +328,12 @@
                     {
                         incomingDataKey: '',
                         outgoingToggleCommand: commands.noseUp,
-                        buttonText: 'VS Down',
+                        buttonText: 'Nose Up',
                     },
                     {
                         incomingDataKey: '',
                         outgoingToggleCommand: commands.noseDown,
-                        buttonText: 'VS Down',
+                        buttonText: 'Nose Down',
                     }
 
                 ],
