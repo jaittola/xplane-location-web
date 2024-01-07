@@ -19,7 +19,7 @@ server.bind(49008, () => {
 
 server.on('message', processMessage)
 
-var handlers = []
+let handlers = []
 
 const DATA_MSG_LEN = 9 * 4;
 

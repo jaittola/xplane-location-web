@@ -1,11 +1,11 @@
 const _       = require('lodash');
-var express = require("express");
+const express = require("express");
 
-var app  = express();
-var http = require("http").Server(app);
-var io   = require("socket.io")(http);
+const app  = express();
+const http = require("http").Server(app);
+const io   = require("socket.io")(http);
 
-var port = 3001;
+const port = 3001;
 /*
 var mapsKey = process.env["GOOGLE_MAPS_KEY"];
 if (!mapsKey) {
@@ -14,7 +14,7 @@ if (!mapsKey) {
 }
 */
 
-var udpreceive = require('./udpreceive');
+const udpreceive = require('./udpreceive');
 udpreceive.onData((message) => { io.emit('data', message); });
 
 
