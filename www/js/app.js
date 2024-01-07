@@ -40,6 +40,9 @@
         toggleYawDamper: 'sim/systems/yaw_damper_toggle',
         noseUp: 'sim/autopilot/nose_up_pitch_mode',
         noseDown: 'sim/autopilot/nose_down_pitch_mode',
+        headingUp: 'sim/autopilot/heading_up',
+        headingDown: 'sim/autopilot/heading_down',
+        headingSync: 'sim/autopilot/heading_sync'
     };
 
     function setup() {
@@ -338,6 +341,26 @@
 
                 ],
             },
+            {
+                rowId: 'controls-row-4',
+                buttons: [
+                    {
+                        incomingDataKey: '',
+                        outgoingToggleCommand: commands.headingDown,
+                        buttonText: 'Heading -',
+                    },
+                    {
+                        incomingDataKey: '',
+                        outgoingToggleCommand: commands.headingUp,
+                        buttonText: 'Heading +',
+                    },
+                    {
+                        incomingDataKey: '',
+                        outgoingToggleCommand: commands.headingSync,
+                        buttonText: 'Heading sync',
+                    },
+                ]
+            }
 
         ];
 
