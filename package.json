@@ -5,9 +5,9 @@
   "main": "server.js",
   "dependencies": {
     "detect-rpi": "^1.4.0",
+    "epoll": "^4.0.2",
     "express": "^4.18.2",
     "lodash": "^4.17.21",
-    "rpio": "^2.4.2",
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2"
   },

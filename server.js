@@ -5,6 +5,8 @@ const app  = express();
 const http = require("http").Server(app);
 const io   = require("socket.io")(http);
 
+const isPi = require("detect-rpi");
+
 const port = 3001;
 /*
 var mapsKey = process.env["GOOGLE_MAPS_KEY"];
@@ -17,6 +19,15 @@ if (!mapsKey) {
 const udpreceive = require('./udpreceive');
 udpreceive.onData((message) => { io.emit('data', message); });
 
+if (isPi()) {
+    const hwcontrols = require('./hwcontrols')
+    hwcontrols.setup(udpreceive)
+
+    process.once('SIGINT', () => {
+        console.log("Caught SIGINT, exiting")
+        process.exit(42)
+    })
+}
 
 io.on('connection', function(socket) {
 //    socket.emit('setup', { 'key': mapsKey });
