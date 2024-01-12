@@ -442,6 +442,11 @@ function setDatarefValue(datarefValue) {
 }
 
 function sendToXPlane(buffer, onSuccess) {
+    if (!xplaneAddress?.address) {
+        err("XPlane address not defined. Won't send command to XPlane")
+        return
+    }
+
     server.send(buffer, 49000, xplaneAddress.address, (err) => {
         if (err) {
             debug("Sending to XPlane failed", err);
@@ -459,4 +464,8 @@ function debug(...args) {
     if (debugging) {
         console.log(...args)
     }
+}
+
+function err(...args) {
+    console.error(...args)
 }
