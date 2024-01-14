@@ -11,7 +11,7 @@ exports.setup = setup
 // relative=1 ?
 
 var encoderFds = {}
-var pushButtonFds = {}
+var switchFds = {}
 
 var epo = undefined
 var xplane = undefined
@@ -27,6 +27,8 @@ function setup(udpreceive) {
 
     setupEncoder(14, 15, 'sim/autopilot/heading_up', 'sim/autopilot/heading_down')
     setupPushButton(18, 'sim/autopilot/heading_sync')
+    setupSwitch(23, { onLow: 'sim/lights/landing_lights_off',
+                      onHigh: 'sim/lights/landing_lights_on'})
 }
 
 function setupEncoder(pinA, pinB, commandIncrease, commandDecrease) {
@@ -35,6 +37,10 @@ function setupEncoder(pinA, pinB, commandIncrease, commandDecrease) {
 }
 
 function setupPushButton(pin, command) {
+    setupSwitch(pin, { onLow: command })
+}
+
+function setupSwitch(pin, commands) {
     const gpiodir = `/sys/class/gpio/gpio${pin}`
 
     runShellCommand(`echo ${pin} > /sys/class/gpio/unexport`)
@@ -50,7 +56,7 @@ function setupPushButton(pin, command) {
     runShellCommand(`echo 'in' > ${gpiodir}/direction`)
 
     const fd = fs.openSync(`${gpiodir}/value`, 'r')
-    pushButtonFds[fd] = { pin, command }
+    switchFds[fd] = { pin, ...commands }
     epo.add(fd, Epoll.EPOLLPRI | Epoll.EPOLLERR)
 
     // I have no idea why setting the edge has to be run after a delay,
@@ -101,9 +107,9 @@ function processEpoll(err, fd, events) {
         }
     }
 
-    const pushButton = pushButtonFds[fd]
-    if (pushButton) {
-        readPushButtonValue(fd, pushButton.command)
+    const switchConfig = switchFds[fd]
+    if (switchConfig) {
+        readSwitchValue(fd, switchConfig)
     }
 }
 
@@ -144,15 +150,29 @@ function readInputEvent(fd) {
     return { type, code, value }
 }
 
-function readPushButtonValue(fd, command) {
+function readSwitchValue(fd, switchConfig) {
     const buffer = Buffer.alloc(2)
     try {
         const read = fs.readSync(fd, buffer, 0, 2, 0)
         debug(`Read ${read} bytes from fd ${fd}: '${buffer.toString().trim()}'`)
         if (read > 0) {
-            if (parseInt(buffer.toString()) == 0) {
-                debug("Found 0, sending command")
-                sendCommand(command)
+            const val = parseInt(buffer.toString())
+            switch (val) {
+            case 0:
+                if (switchConfig.onLow) {
+                    debug("Found 0, sending command")
+                    sendCommand(switchConfig.onLow)
+                }
+                break
+            case 1:
+                if (switchConfig.onHigh) {
+                    debug("Found 1, sending command")
+                    sendCommand(switchConfig.onHigh)
+                }
+                break
+            default:
+                err("Got unknown value from switch", val)
+                break
             }
         }
         else {
@@ -175,16 +195,16 @@ function removeFd(fd) {
     }
 
     delete encoderFds[fd]
-    delete pushButtonFds[fd]
+    delete switchFds[fd]
 }
 
 function cleanup() {
     err("Cleaning up")
 
-    const pushButtonPins = Object.values(pushButtonFds).map(pb => pb.pin)
+    const pushButtonPins = Object.values(switchFds).map(pb => pb.pin)
 
     Object.keys(encoderFds).forEach(fd => { removeFd(fd) })
-    Object.keys(pushButtonFds).forEach(fd => { removeFd(fd) })
+    Object.keys(switchFds).forEach(fd => { removeFd(fd) })
 
     epo?.close()
 
