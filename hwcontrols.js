@@ -25,6 +25,45 @@ function setup(udpreceive) {
 
     epo = new Epoll(processEpoll)
 
+    configureControls()
+}
+
+function configureControls() {
+
+    //  crs (rotary) 23,24   | ap hdg (rotary)  14,15 | ap alt (rotary) 25,8  | ap vs (rotary) 7,1 | ap hdg (btn) 27
+    //                         ap hdg sync (but) 18   | ap alt sync (but) 27
+    // --------------------------------------------------------------------------------------------
+    //  gps c/n coarse 12,16 | gps c/n fine 20,21     | gps chapter (rot) 2,3 | gps page (rot) 4,17
+
+
+    // crs:            GPIO 23, 24; pins 16, 18   GNDPIN 14  sim/autopilot/hsi_select_down | hsi_select_up
+    // ap hdg:         GPIO 14, 15; pins  8, 10   GNDPIN 6   sim/autopilot/heading_down | up
+    // ap hdg sync:    GPIO     18; pins 12                  sim/autopilot/heading_sync
+    // ap alt:         GPIO 25,  8; pins 22, 24   GNDPIN 20  sim/autopilot/altitude_down | up
+    // ap alt sync     GPIO     27; pins     13              sim/autopilot/altitude_sync
+    // ap vs:          GPIO  7,  1: pins 26, 28   GNDPIN 30  sim/autopilot/vertical_speed_down | up
+    // ap hdg:         GPIO     22: pins     15   GNDPIN ?   sim/autopilot/heading
+    // gps c/n coarse: GPIO 12, 16: pins 32, 36   GNDPIN 34  sim/GPS/g430n1_coarse_down | up
+    // gps c/n fine:   GPIO 20, 21: pins 38, 40   GNDPIN 39  sim/GPS/g430n1_fine_down | up
+    // gps chapter:    GPIO  2,  3: pins  3,  5   GNDPIN 9   sim/GPS/g430n1_chapter_down | up
+    // gps page:       GPIO  4, 17: pins  7, 11   GNDPIN 25  sim/GPS/g430n1_page_down | up
+    // switch          GPIO     26: pins     37   GNDPIN 39  sim/lights/landing_lights_off | on
+
+    setupEncoder(24, 23, 'sim/radios/obs1_down', 'sim/radios/obs1_up')
+    setupEncoder(15, 14, 'sim/autopilot/heading_down', 'sim/autopilot/heading_up')
+    setupPushButton(18, 'sim/autopilot/heading_sync')
+    setupEncoder(8, 25, 'sim/autopilot/altitude_down', 'sim/autopilot/altitude_up')
+    setupPushButton(27, 'sim/autopilot/altitude_sync')
+    setupEncoder(1, 7, 'sim/autopilot/vertical_speed_down', 'sim/autopilot/vertical_speed_up')
+    setupEncoder(16, 12, 'sim/GPS/g430n1_coarse_down', 'sim/GPS/g430n1_coarse_up')
+    setupEncoder(21, 20, 'sim/GPS/g430n1_fine_down', 'sim/GPS/g430n1_fine_up')
+    setupEncoder(3, 2, 'sim/GPS/g430n1_chapter_down', 'sim/GPS/g430n1_chapter_up')
+    setupEncoder(17, 4, 'sim/GPS/g430n1_page_down', 'sim/GPS/g430n1_page_up')
+    setupSwitch(26, { onLow: 'sim/lights/landing_lights_off',
+                      onHigh: 'sim/lights/landing_lights_on'})
+}
+
+function configureControlsForTest() {
     setupEncoder(14, 15, 'sim/autopilot/heading_up', 'sim/autopilot/heading_down')
     setupPushButton(18, 'sim/autopilot/heading_sync')
     setupSwitch(23, { onLow: 'sim/lights/landing_lights_off',
