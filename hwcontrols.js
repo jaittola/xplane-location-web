@@ -3,6 +3,8 @@ const Epoll = require('epoll').Epoll
 const fs = require('fs')
 const { Buffer } = require('buffer');
 
+const { debug, err } = require('./logs')
+
 exports.setup = setup
 
 // sudo dtoverlay rotary-encoder pin_a=14 pin_b=15 rollover=1
@@ -74,7 +76,7 @@ function setupEncoderPolling(pinA, pinB, commandIncrease, commandDecrease, retry
                                     })
             }, 500)
         } else {
-            console.log(`Setting up encoder for pins ${pinA} and ${pinB} failed: ${error}`)
+            err(`Setting up encoder for pins ${pinA} and ${pinB} failed: ${error}`)
         }
 
         return
@@ -82,10 +84,10 @@ function setupEncoderPolling(pinA, pinB, commandIncrease, commandDecrease, retry
 }
 
 function processEpoll(err, fd, events) {
-    console.log(`Process poll for ${fd}, ${events}`)
+    debug(`Process poll for ${fd}, ${events}`)
 
     if (err) {
-        console.log(`Epoll for fd ${fd} failed: ${err}`)
+        err(`Epoll for fd ${fd} failed: ${err}`)
         removeFd(fd)
         return
     }
@@ -130,7 +132,7 @@ function readInputEvent(fd) {
             return undefined
         }
     } catch (error) {
-        console.log(`Reading from FD ${fd} failed: ${error}`)
+        err(`Reading from FD ${fd} failed: ${error}`)
         removeFd(fd)
         return undefined
     }
@@ -146,10 +148,10 @@ function readPushButtonValue(fd, command) {
     const buffer = Buffer.alloc(2)
     try {
         const read = fs.readSync(fd, buffer, 0, 2, 0)
-        console.log(`Read ${read} bytes from fd ${fd}: ${buffer.toString().trim()}`)
+        debug(`Read ${read} bytes from fd ${fd}: '${buffer.toString().trim()}'`)
         if (read > 0) {
             if (parseInt(buffer.toString()) == 0) {
-                console.log("Found 0, sending command")
+                debug("Found 0, sending command")
                 sendCommand(command)
             }
         }
@@ -157,7 +159,7 @@ function readPushButtonValue(fd, command) {
             removeFd(fd)
         }
     } catch (error) {
-        console.log(`Reading from push button fd ${fd} failed: ${error}`)
+        err(`Reading from push button fd ${fd} failed: ${error}`)
         removeFd(fd)
     }
 }
@@ -165,11 +167,11 @@ function readPushButtonValue(fd, command) {
 function removeFd(fd) {
     try {
         const numfd = parseInt(fd)
-        console.log(`Removing fd ${numfd}`)
+        debug(`Removing fd ${numfd}`)
         epo?.remove(numfd)
         fs.close(numfd)
     } catch (error) {
-        console.log(`Removing fd ${fd} failed: ${error}`)
+        err(`Removing fd ${fd} failed: ${error}`)
     }
 
     delete encoderFds[fd]
@@ -177,7 +179,7 @@ function removeFd(fd) {
 }
 
 function cleanup() {
-    console.log("Cleaning up")
+    err("Cleaning up")
 
     const pushButtonPins = Object.values(pushButtonFds).map(pb => pb.pin)
 
@@ -192,15 +194,15 @@ function cleanup() {
         runShellCommand(`echo ${pin} > /sys/class/gpio/unexport`)
     })
 
-    console.log("Clean-up done")
+    debug("Clean-up done")
 }
 
 function runShellCommand(cmd, options) {
     const { error, stderr } = spawnSync(cmd, { shell: true })
     if (error) {
-        console.log(`spawnSync error: ${error}`);
+        err(`spawnSync error: ${error}`);
         if (stderr) {
-            console.log("stderr output:", stderr)
+            err("stderr output:", stderr)
         }
         if (options?.ignoreErrors !== true) {
             process.exit(1)

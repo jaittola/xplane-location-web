@@ -3,6 +3,8 @@ const server = dgram.createSocket('udp4');
 
 const _ = require('lodash');
 
+const { debug, err } = require('./logs')
+
 exports.onData = (handler) => handlers.push(handler);
 exports.command = (cmd) => performCommand(cmd);
 exports.setDatarefValue = (datarefValue) => setDatarefValue(datarefValue);
@@ -456,16 +458,4 @@ function sendToXPlane(buffer, onSuccess) {
             onSuccess();
         }
     });
-}
-
-const debugging = !!process.env['DEBUG'] || false
-
-function debug(...args) {
-    if (debugging) {
-        console.log(...args)
-    }
-}
-
-function err(...args) {
-    console.error(...args)
 }
