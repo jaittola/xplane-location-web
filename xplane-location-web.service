@@ -1,0 +1,12 @@
+[Unit]
+Description=Web UI and hardware controls for XPlane
+After=network.target
+
+[Service]
+Type=simple
+User=jaittola
+ExecStart=/usr/bin/node /home/jaittola/xplane-location-web/server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
