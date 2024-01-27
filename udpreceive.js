@@ -217,7 +217,7 @@ function processMessage(msg, rinfo) {
         debug("Unknown message, will skip. Type is", msgtype);
         debug("Message content is ", msg.slice(5).toString());
         break;
-                          }
+    }
 
     if (!datarefTimer) {
         requestDatarefs();

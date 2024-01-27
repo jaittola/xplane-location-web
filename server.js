@@ -1,4 +1,3 @@
-const _       = require('lodash');
 const express = require('express');
 
 const app  = express();
@@ -7,7 +6,7 @@ const io   = require('socket.io')(http);
 
 const isPi = require('detect-rpi');
 
-const { debug, err } = require('./logs')
+const { err } = require('./logs')
 
 const port = 3001;
 
@@ -25,7 +24,6 @@ if (isPi()) {
 }
 
 io.on('connection', function(socket) {
-//    socket.emit('setup', { 'key': mapsKey });
     socket.on('message', (data) => {
         if (data.hasOwnProperty('command'))
             udpreceive.command(data);
