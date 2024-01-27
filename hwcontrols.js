@@ -18,8 +18,8 @@ var xplane = undefined
 
 const inputEventSize = 16
 
-function setup(udpreceive) {
-    xplane = udpreceive
+function setup(xplanec) {
+    xplane = xplanec
 
     process.on('exit', cleanup)
 

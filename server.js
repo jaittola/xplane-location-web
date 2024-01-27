@@ -10,12 +10,15 @@ const { err } = require('./logs')
 
 const port = 3001;
 
-const udpreceive = require('./udpreceive');
-udpreceive.onData((message) => { io.emit('data', message); });
+const xplaneComms = require('./xplane-comms');
+xplaneComms.onData((message) => {
+  console.log("Received", message)
+  io.emit('data', message);
+});
 
 if (isPi()) {
     const hwcontrols = require('./hwcontrols')
-    hwcontrols.setup(udpreceive)
+    hwcontrols.setup(xplaneComms)
 
     process.once('SIGINT', () => {
         err("Caught SIGINT, exiting")
@@ -26,9 +29,9 @@ if (isPi()) {
 io.on('connection', function(socket) {
     socket.on('message', (data) => {
         if (data.hasOwnProperty('command'))
-            udpreceive.command(data);
+            xplaneComms.command(data);
         else if (data.hasOwnProperty('setDatarefValue'))
-            udpreceive.setDatarefValue(data.setDatarefValue)
+            xplaneComms.setDatarefValue(data.setDatarefValue)
     });
 });
 
