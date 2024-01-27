@@ -21,6 +21,8 @@ server.bind(49008, () => {
 
 server.on('message', processMessage)
 
+setInterval(() => sendDataCache(), 200)
+
 let handlers = []
 
 const DATA_MSG_LEN = 9 * 4;
@@ -32,6 +34,8 @@ const CMDHDR  = "CMND0";
 
 let xplaneAddress = undefined;
 let datarefTimer = undefined;
+
+var receivedDataCache = {}
 
 const datarefs = [
     {
@@ -195,6 +199,23 @@ const datarefsByID = _.chain(datarefs)
 
 const datarefsByTarget = _.keyBy(datarefs, (dr) => dr.target);
 
+function sendDataCache() {
+    handlers.forEach(handler => {
+        debug("Sending Data cache", JSON.stringify(receivedDataCache, null, 2))
+        handler(receivedDataCache)
+    })
+}
+
+function addToDataCache(messages) {
+    debug("Adding to data cache", JSON.stringify(messages, null, 2))
+    receivedDataCache = _.reduce(messages, (prev, curr) => {
+        return ({
+            ...prev,
+            ...curr
+        })
+    }, receivedDataCache)
+}
+
 function processMessage(msg, rinfo) {
     debug(`server got: ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
     xplaneAddress = {
@@ -254,9 +275,7 @@ function processDataMessage(buffer) {
         .filter((message) => message != null)
         .value();
 
-    _.forEach(handlers, (handler) => {
-        _.forEach(messages, handler);
-    });
+    addToDataCache(messages)
 
     debug("Messages: " + JSON.stringify(messages, null, 2));
 }
@@ -355,9 +374,7 @@ function processRref(buffer) {
         if (datarefDetails.parse) {
             const result = datarefDetails.parse(buffer.slice(4, 4 + length), datarefDetails)
             debug("Got Dataref", datarefID, datarefDetails.name, result, buffer.toString('hex'));
-            handlers.forEach(handler => {
-                handler(result);
-            });
+            addToDataCache([result])
         } else {
             debug("Got dataref", datarefID, datarefDetails ? datarefDetails.name : 'unknown',
                   "raw content", buffer.slice(4).toString('hex'));

@@ -12,7 +12,6 @@ const port = 3001;
 
 const xplaneComms = require('./xplane-comms');
 xplaneComms.onData((message) => {
-  console.log("Received", message)
   io.emit('data', message);
 });
 
