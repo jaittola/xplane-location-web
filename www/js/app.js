@@ -109,6 +109,7 @@
                 var nextY = event.clientY - offsetY;
                 panel.style.left = nextX + "px";
                 panel.style.top = nextY + "px";
+                panel.style.right = undefined;
                 event.preventDefault();
             }
 
