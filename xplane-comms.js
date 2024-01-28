@@ -265,9 +265,9 @@ function processDataMessage(buffer) {
             };
         })
         .map((message) => {
-            const handler = messageParsers[message.dataIndex]
-            if (handler) {
-                return handler(message);
+            const messageParser = messageParsers[message.dataIndex]
+            if (messageParser) {
+                return messageParser(message);
             }
             return null;
         })
@@ -320,7 +320,7 @@ function parsePitchRollHeadings(message) {
     return _.assign(message, {
         pitch: message.dataFields[0],
         roll: message.dataFields[1],
-        heading: message.dataFields[3]
+        'mag-heading': message.dataFields[2]
     });
 }
 

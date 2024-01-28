@@ -371,7 +371,7 @@
 
     var staticHandlers = {
         'velocity': setNumericalData,
-        'heading': setHeading,
+        'mag-heading': setMagneticHeading,
         'altitude': setNumericalData,
         'lat': setLatitude,
         'lon': setLongitude,
@@ -379,6 +379,7 @@
         'hasRetractingGear': setHasRetractingGear,
         'isGearUnsafe': setIsGearUnsafe,
         'isGearHandleDown': setIsGearHandleDown,
+        'parking-brake': setParkingBrake,
     };
 
     var handlers = [];
@@ -439,11 +440,16 @@
         setNumericalData(key, value);
     }
 
-    function setHeading(key, value) {
+    function setMagneticHeading(key, value) {
         if (_.isNumber(value)) {
             bearing = value;
         }
         setNumericalData(key, value);
+    }
+
+    function setParkingBrake(key, value) {
+        const textValue = value === 'Engaged' ? 'Engaged' : 'Released'
+        setText(key, textValue)
     }
 
     function setText(key, value) {
