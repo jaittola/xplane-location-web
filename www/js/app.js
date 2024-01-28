@@ -46,11 +46,14 @@
     };
 
     function setup() {
+        const mapElement = document.getElementById('map')
+        const variant = !!mapElement ? 'map' : 'controls'
+
         setupSocket();
-        setupMap();
-        setupClearButton();
-        setupDataPanel();
+        if (mapElement) setupMap(mapElement);
+        setupDataPanel(variant);
         setupControls();
+        setupClearButton();
     }
 
     function setupSocket() {
@@ -64,11 +67,7 @@
         });
     }
 
-    function setupMap(data) {
-        if (!document.getElementById('map')) {
-            return;
-        }
-
+    function setupMap() {
         if (map) {
             return;
         }
@@ -93,9 +92,102 @@
         }
     }
 
-    function setupDataPanel() {
-        var panel = document.getElementById('stats');
+    function setupDataPanel(variant) {
+        var main = document.getElementsByClassName('main')[0]
 
+        if (!main) {
+            alert('Cannot set up, main is missing')
+            return
+        }
+
+        var panel = createDataPanel(variant)
+
+        main.appendChild(panel)
+
+        setupDataPanelMoveHandler(panel)
+    }
+
+    function createDataPanel(variant) {
+        const panel = document.createElement('div')
+        panel.className = 'data-panel'
+
+        const panelData = [
+            {title: 'Velocity', item: 'velocity', unit: 'kn'},
+            {title: 'Heading (M)', item: 'heading', unit: '°'},
+            {title: 'Altitude', item: 'altitude', unit: 'ft'},
+            {title: 'Latitude', item: 'lat', unit: '°'},
+            {title: 'Longitude', item: 'lon', unit: '°'},
+            {title: 'Gear', item: 'gear'},
+            {title: 'Parking brake', item: 'parking-brake'},
+        ]
+
+        panelData
+            .map(({title, item, unit}) => {
+                const element = document.createElement('div')
+                element.className = 'data'
+
+                const titleElement = document.createElement('div')
+                titleElement.className = 'data-item'
+                titleElement.textContent = title
+                element.appendChild(titleElement)
+
+                const valueElement = document.createElement('span')
+                valueElement.className = 'data-value'
+                valueElement.id = `data-${item}`
+                valueElement.textContent = ' - '
+                element.appendChild(valueElement)
+
+                if (unit !== undefined) {
+                    const unitElement = document.createElement('span')
+                    unitElement.className = 'data-unit'
+                    unitElement.textContent = ` ${unit}`
+                    element.appendChild(unitElement)
+                }
+
+                return element;
+            })
+            .forEach(element =>  {
+                panel.appendChild(element)
+            })
+
+        const spacer = document.createElement('div')
+        spacer.className = 'spacer'
+        panel.appendChild(spacer)
+
+        switch (variant) {
+        case 'map':
+            {
+                const buttonContainer = document.createElement('div')
+                buttonContainer.classList.add('data', 'vertical-margin')
+
+                const clearTrack = document.createElement('button')
+                clearTrack.id = 'clear-track'
+                clearTrack.textContent = 'Clear track'
+                buttonContainer.appendChild(clearTrack)
+
+                panel.appendChild(buttonContainer)
+
+                const linkToControls = document.createElement('a')
+                linkToControls.setAttribute('href', '/')
+                linkToControls.textContent = 'Show controls'
+                panel.appendChild(linkToControls)
+            }
+            break
+
+        case 'controls':
+            {
+                const linkToMap = document.createElement('a')
+                linkToMap.setAttribute('href', 'map.html')
+                linkToMap.textContent = 'Show map'
+                panel.appendChild(linkToMap)
+            }
+            break
+        }
+
+        return panel
+    }
+
+    function setupDataPanelMoveHandler(panel) {
         panel.addEventListener('mousedown', function(event) {
             var rect = panel.getBoundingClientRect();
             var offsetX = event.clientX - rect.left;

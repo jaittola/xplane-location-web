@@ -5,7 +5,7 @@ html, body {
     padding: 0;
 }
 
-.mapview, .main {
+.main {
     height: 100%;
     display: flex;
     flex-flow: row nowrap;
@@ -41,6 +41,11 @@ html, body {
 
 .top-margin {
     margin-top: 6px;
+}
+
+.vertical-margin {
+    margin-top: 6px;
+    margin-bottom: 6px;
 }
 
 button {
