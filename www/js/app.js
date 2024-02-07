@@ -60,13 +60,43 @@
     }
 
     function setupSocket() {
-        socket = io()
+        function connect() {
+            const ws = new WebSocket(`ws://${location.host}/websocket`)
 
-        socket.on("connect", function () {})
+            ws.addEventListener("open", () => {
+                console.log("Websocket opened")
+                socket = ws
+            })
 
-        socket.on("data", function (data) {
-            handleData(data)
-        })
+            ws.addEventListener("close", () => {
+                console.log("Websocket closed")
+                socket = undefined
+
+                setTimeout(() => {
+                    connect()
+                }, 2000)
+            })
+
+            ws.addEventListener("error", () => {
+                console.log("Websocket failed")
+                // A close event should follow.
+            })
+
+            ws.addEventListener("message", (message) => {
+                try {
+                    const jsonm = JSON.parse(message.data)
+                    console.log(
+                        "Got data from socket",
+                        JSON.stringify(jsonm, null, 2),
+                    )
+                    handleData(jsonm)
+                } catch (error) {
+                    console.error("Got bad data from socket, skipping", error)
+                }
+            })
+        }
+
+        connect()
     }
 
     function setupMap() {
@@ -122,8 +152,9 @@
         panel.className = "data-panel"
 
         const panelData = [
-            { title: "Velocity", item: "velocity", unit: "kn" },
-            { title: "Heading (M)", item: "heading", unit: "°" },
+            { title: "Velocity (IAS)", item: "ias", unit: "kn" },
+            { title: "Velocity (TAS)", item: "tas", unit: "kn" },
+            { title: "Heading (M)", item: "mag-heading", unit: "°" },
             { title: "Altitude", item: "altitude", unit: "ft" },
             { title: "Latitude", item: "lat", unit: "°" },
             { title: "Longitude", item: "lon", unit: "°" },
@@ -341,8 +372,6 @@
                         incomingDataKey: "parking-brake",
                         outgoingToggleCommand: commands.toggleParkingBrake,
                         buttonText: "Parking Brake",
-                        isButtonPressed: (receivedValue) =>
-                            receivedValue === "Engaged",
                     },
                 ],
             },
@@ -400,12 +429,12 @@
                 rowId: "controls-row-2",
                 buttons: [
                     {
-                        incomingDataKey: "pitot-heat-0",
+                        incomingDataKey: "pitot-heat-1",
                         outgoingToggleCommand: commands.togglePitot0,
                         buttonText: "Pitot Heat",
                     },
                     {
-                        incomingDataKey: "pitot-heat-1",
+                        incomingDataKey: "pitot-heat-2",
                         outgoingToggleCommand: commands.togglePitot1,
                         buttonText: "Pitot Heat",
                     },
@@ -511,15 +540,16 @@
     }
 
     var staticHandlers = {
-        velocity: setNumericalData,
+        ias: setNumericalData,
+        tas: setNumericalData,
         "mag-heading": setMagneticHeading,
         altitude: setNumericalData,
         lat: setLatitude,
         lon: setLongitude,
         gear: setGear,
-        hasRetractingGear: setHasRetractingGear,
-        isGearUnsafe: setIsGearUnsafe,
-        isGearHandleDown: setIsGearHandleDown,
+        "has-retracting-gear": setHasRetractingGear,
+        "is-gear-unsafe": setIsGearUnsafe,
+        "is-gear-handle-down": setIsGearHandleDown,
         "parking-brake": setParkingBrake,
     }
 
@@ -594,7 +624,7 @@
     }
 
     function setParkingBrake(key, value) {
-        const textValue = value === "Engaged" ? "Engaged" : "Released"
+        const textValue = value == true ? "Engaged" : "Released"
         setText(key, textValue)
     }
 
@@ -614,7 +644,7 @@
         addOrRemoveClass(element, value == "Down", "active-green")
     }
 
-    function setHasRetractingGear(key, value) {
+    function setHasRetractingGear(_key, value) {
         const element = document.getElementById("gear-control-container")
         if (element) {
             element.style.display = value ? "flex" : "none"
@@ -638,14 +668,14 @@
     }
 
     function sendCommand(command) {
-        socket.send({ command: command })
+        socket?.send(JSON.stringify({ command: command }))
     }
 
     function toggleValue(key) {
         if (!currentDataValues.hasOwnProperty(key)) {
             return
         }
-        socket.send({
+        socket?.send({
             setDatarefValue: {
                 name: key,
                 floatValue: currentDataValues[key] === true ? 0 : 1,
