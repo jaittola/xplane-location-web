@@ -1,5 +1,7 @@
 mod channels;
 mod control_msgs;
+mod gpio;
+mod gpio_event_detect;
 mod webserver;
 mod xpc_types;
 mod xplane_comms;
@@ -8,6 +10,7 @@ use std::{env, process::exit};
 
 use channels::{create_channels, ChannelsController};
 use control_msgs::ControlMessages;
+use gpio::run_gpio;
 use webserver::run_webserver;
 use xplane_comms::run_comms;
 
@@ -26,6 +29,8 @@ async fn main() {
     tokio::spawn(async move {
         run_signal_handler(controller_endpoint).await;
     });
+
+    run_gpio();
 
     let ws_future = run_webserver(ui_endpoint);
 
