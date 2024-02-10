@@ -14,7 +14,7 @@ mod gpio_linux {
     use tokio_gpiod::{Bias, Chip, Edge, EdgeDetect, Options};
 
     use crate::gpio_event_detect::{
-        self, EncoderCommands, EncoderInput, GpioEvent, GpioEventDetect, GpioInput,
+        self, ButtonInput, EncoderCommands, EncoderInput, GpioEvent, GpioEventDetect, GpioInput,
     };
 
     pub async fn gpio_main() -> Option<()> {
@@ -52,13 +52,17 @@ mod gpio_linux {
                     cmd_left: String::from("test_left_2nd"),
                 },
             }),
+            GpioInput::Button(ButtonInput {
+                gpio: 18,
+                command: String::from("button!"),
+            }),
         ];
 
         let input_pins = inputs
             .iter()
             .map(|input| match input {
                 GpioInput::Encoder(enc) => Vec::from([enc.gpio1 as u32, enc.gpio2 as u32]),
-                _ => Vec::new(),
+                GpioInput::Button(b) => Vec::from([b.gpio as u32]),
             })
             .flatten()
             .collect::<Vec<u32>>();
@@ -84,10 +88,11 @@ mod gpio_linux {
 
             println!("event: {:?}", event);
 
-            match event_detect.on_event(event.line as usize, map_edge(event.edge)) {
+            match event_detect.on_event(event.line as usize, map_edge(event.edge), &event.time) {
                 Some(GpioEvent::Encoder(ee)) => {
                     println!("Got encoder event {:?}", ee);
                 }
+                Some(e) => println!("Got another event {:?}", e),
                 None => {}
             }
         }
