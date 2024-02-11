@@ -1,0 +1,90 @@
+[
+    {
+        "type": "encoder",
+        "gpio1": 23,
+        "gpio2": 24,
+        "command": {
+            "encoder_name": "Adjust obs",
+            "cmd_right": "sim/radios/obs1_up",
+            "cmd_left": "sim/radios/obs1_down"
+        }
+    },
+    {
+        "type": "encoder",
+        "gpio1": 14,
+        "gpio2": 15,
+        "command": {
+            "encoder_name": "Autopilot heading",
+            "cmd_right": "sim/autopilot/heading_up",
+            "cmd_left": "sim/autopilot/heading_down"
+        }
+    },
+    { "type": "button", "gpio": 18, "command": "sim/autopilot/heading_sync" },
+    {
+        "type": "encoder",
+        "gpio1": 25,
+        "gpio2": 8,
+        "command": {
+            "encoder_name": "Autopilot altitude",
+            "cmd_right": "sim/autopilot/altitude_up",
+            "cmd_left": "sim/autopilot/altitude_down"
+        }
+    },
+    { "type": "button", "gpio": 27, "command": "sim/autopilot/altitude_sync" },
+    {
+        "type": "encoder",
+        "gpio1": 7,
+        "gpio2": 1,
+        "command": {
+            "encoder_name": "Autopilot vs",
+            "cmd_right": "sim/autopilot/vertical_speed_up",
+            "cmd_left": "sim/autopilot/vertical_speed_down"
+        }
+    },
+    {
+        "type": "encoder",
+        "gpio1": 12,
+        "gpio2": 16,
+        "command": {
+            "encoder_name": "G430 coarse",
+            "cmd_right": "sim/GPS/g430n1_coarse_up",
+            "cmd_left": "sim/GPS/g430n1_coarse_down"
+        }
+    },
+    {
+        "type": "encoder",
+        "gpio1": 20,
+        "gpio2": 21,
+        "command": {
+            "encoder_name": "G430 fine",
+            "cmd_right": "sim/GPS/g430n1_fine_up",
+            "cmd_left": "sim/GPS/g430n1_fine_down"
+        }
+    },
+    {
+        "type": "encoder",
+        "gpio1": 2,
+        "gpio2": 3,
+        "command": {
+            "encoder_name": "G430 page",
+            "cmd_right": "sim/GPS/g430n1_page_up",
+            "cmd_left": "sim/GPS/g430n1_page_dn"
+        }
+    },
+    {
+        "type": "encoder",
+        "gpio1": 17,
+        "gpio2": 4,
+        "command": {
+            "encoder_name": "G430 chapter",
+            "cmd_right": "sim/GPS/g430n1_chapter_up",
+            "cmd_left": "sim/GPS/g430n1_chapter_dn"
+        }
+    },
+    {
+        "type": "switch",
+        "gpio": 26,
+        "command_low": "sim/lights/landing_lights_off",
+        "command_high": "sim/lights_landing_lights_on"
+    }
+]

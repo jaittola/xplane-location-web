@@ -2,6 +2,8 @@
 
 use std::time::Duration;
 
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Clone)]
 pub enum EncoderEventType {
     Right,
@@ -26,26 +28,38 @@ pub enum GpioEvent {
     Button(ButtonEvent),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncoderInput {
     pub gpio1: usize,
     pub gpio2: usize,
     pub command: EncoderCommands,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ButtonInput {
     pub gpio: usize,
     pub command: String,
 }
 
-#[derive(Debug, Clone)]
-pub enum GpioInput {
-    Encoder(EncoderInput),
-    Button(ButtonInput),
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SwitchInput {
+    pub gpio: usize,
+    pub command_high: String,
+    pub command_low: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum GpioInput {
+    #[serde(rename = "encoder")]
+    Encoder(EncoderInput),
+    #[serde(rename = "button")]
+    Button(ButtonInput),
+    #[serde(rename = "switch")]
+    Switch(SwitchInput),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncoderCommands {
     pub encoder_name: String,
     pub cmd_right: String,
@@ -92,37 +106,41 @@ impl GpioEventDetect {
             last_event_times: [Duration::ZERO; MAX_PINS],
         };
 
-        for (i, input) in inputs.iter().enumerate() {
-            match input {
-                GpioInput::Encoder(encoder) => event_detect.register_encoder(i, encoder),
-                GpioInput::Button(button) => event_detect.register_button(i, button),
-            }
+        let mut idx = 0;
+        for input in inputs.iter() {
+            idx = match input {
+                GpioInput::Encoder(encoder) => event_detect.register_encoder(idx, encoder),
+                GpioInput::Button(button) => event_detect.register_button(idx, button),
+                GpioInput::Switch(_) => idx,
+            };
         }
 
         event_detect
     }
 
-    pub fn register_encoder(&mut self, idx: usize, encoder: &EncoderInput) {
-        let pin1 = 2 * idx; // TODO
-        let pin2 = 2 * idx + 1;
+    pub fn register_encoder(&mut self, pin: usize, encoder: &EncoderInput) -> usize {
+        let pin1 = pin;
+        let pin2 = pin + 1;
         let slot = InputSlot::AssignedToEncoder {
             encoder: EncoderWithPins {
                 encoder: encoder.clone(),
-                pin1: 2 * idx,
-                pin2: 2 * idx + 1,
+                pin1,
+                pin2,
             },
         };
 
         self.input_slots[pin1] = slot.clone();
         self.input_slots[pin2] = slot;
+
+        pin + 2
     }
 
-    pub fn register_button(&mut self, idx: usize, button: &ButtonInput) {
-        let pin = 2 * idx; // TODO
-
+    pub fn register_button(&mut self, pin: usize, button: &ButtonInput) -> usize {
         self.input_slots[pin] = InputSlot::AssignedToButton {
             button: button.clone(),
         };
+
+        pin + 1
     }
 
     pub fn on_event(&mut self, pin: usize, edge: Edge, time: &Duration) -> Option<GpioEvent> {

@@ -13,18 +13,16 @@ mod gpio_linux {
 
     use tokio_gpiod::{Bias, Chip, Edge, EdgeDetect, Options};
 
-    use crate::gpio_event_detect::{
-        self, ButtonInput, EncoderCommands, EncoderInput, GpioEvent, GpioEventDetect, GpioInput,
+    use crate::{
+        gpio_event_detect::{self, GpioEvent, GpioEventDetect, GpioInput},
+        gpio_input_cfg,
     };
 
-    pub async fn gpio_main() -> Option<()> {
-        let chip = match Chip::new("gpiochip0").await {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("Opening GPIO chip failed: {:?}", e);
-                return None;
-            }
-        };
+    pub async fn gpio_main() -> Result<(), std::io::Error> {
+        let chip = Chip::new("gpiochip0").await.map_err(|e| {
+            eprintln!("Opening GPIO chip failed: {:?}", e);
+            std::io::Error::other(e.to_string())
+        })?;
 
         println!(
             "Chip {}, label {} has {} lines",
@@ -33,36 +31,14 @@ mod gpio_linux {
             chip.num_lines()
         );
 
-        let inputs = [
-            GpioInput::Encoder(EncoderInput {
-                gpio1: 23,
-                gpio2: 24,
-                command: EncoderCommands {
-                    encoder_name: String::from("Left top"),
-                    cmd_right: String::from("test_right"),
-                    cmd_left: String::from("test_left"),
-                },
-            }),
-            GpioInput::Encoder(EncoderInput {
-                gpio1: 14,
-                gpio2: 15,
-                command: EncoderCommands {
-                    encoder_name: String::from("Left 2nd top"),
-                    cmd_right: String::from("test_right_2nd"),
-                    cmd_left: String::from("test_left_2nd"),
-                },
-            }),
-            GpioInput::Button(ButtonInput {
-                gpio: 18,
-                command: String::from("button!"),
-            }),
-        ];
+        let inputs = gpio_input_cfg::read_input_config()?;
 
         let input_pins = inputs
             .iter()
             .map(|input| match input {
                 GpioInput::Encoder(enc) => Vec::from([enc.gpio1 as u32, enc.gpio2 as u32]),
                 GpioInput::Button(b) => Vec::from([b.gpio as u32]),
+                GpioInput::Switch(_) => Vec::from([]),
             })
             .flatten()
             .collect::<Vec<u32>>();
@@ -72,19 +48,15 @@ mod gpio_linux {
             .bias(Bias::PullUp)
             .consumer("xplane-location-web"); // optionally set consumer string
 
-        let mut gpio_inputs = chip
-            .request_lines(opts)
-            .await
-            .map_err(|e| {
-                eprintln!("Failed getting chip lines: {:?}", e);
-                e
-            })
-            .ok()?;
+        let mut gpio_inputs = chip.request_lines(opts).await.map_err(|e| {
+            eprintln!("Failed getting chip lines: {:?}", e);
+            e
+        })?;
 
         let mut event_detect = GpioEventDetect::new(&inputs);
 
         loop {
-            let event = gpio_inputs.read_event().await.ok()?;
+            let event = gpio_inputs.read_event().await?;
 
             println!("event: {:?}", event);
 
