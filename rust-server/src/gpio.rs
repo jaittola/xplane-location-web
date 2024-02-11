@@ -1,25 +1,30 @@
+use crate::channels::ChannelsUIEndpoint;
+
 #[cfg(not(target_os = "linux"))]
-pub fn run_gpio() {
+pub fn run_gpio(_: &ChannelsUIEndpoint) {
     log::info!("Not a linux platform, not initializing the GPIO.");
 }
 
 #[cfg(target_os = "linux")]
-pub fn run_gpio() {
-    tokio::spawn(async move { gpio_linux::gpio_main().await });
+pub fn run_gpio(channels: &ChannelsUIEndpoint) {
+    let uic = channels.ui_cmds.clone();
+    tokio::spawn(async move { gpio_linux::gpio_main(uic).await });
 }
 
 #[cfg(target_os = "linux")]
 mod gpio_linux {
 
     use log::{debug, error, info};
+    use tokio::sync::mpsc::Sender;
     use tokio_gpiod::{Bias, Chip, Edge, EdgeDetect, Options};
 
     use crate::{
         gpio_event_detect::{self, GpioEvent, GpioEventDetect, GpioInput},
         gpio_input_cfg,
+        xpc_types::UICommand,
     };
 
-    pub async fn gpio_main() -> Result<(), std::io::Error> {
+    pub async fn gpio_main(ui_cmds: Sender<UICommand>) -> Result<(), std::io::Error> {
         let chip = Chip::new("gpiochip0").await.map_err(|e| {
             error!("Opening GPIO chip failed: {:?}", e);
             std::io::Error::other(e.to_string())
@@ -64,8 +69,22 @@ mod gpio_linux {
             match event_detect.on_event(event.line as usize, map_edge(event.edge), &event.time) {
                 Some(GpioEvent::Encoder(ee)) => {
                     info!("Got encoder event {:?}", ee);
+                    ui_cmds
+                        .send(UICommand {
+                            command: ee.command,
+                        })
+                        .await
+                        .ok();
                 }
-                Some(e) => info!("Got another event {:?}", e),
+                Some(GpioEvent::Button(be)) => {
+                    info!("Got button event {:?}", be);
+                    ui_cmds
+                        .send(UICommand {
+                            command: be.command,
+                        })
+                        .await
+                        .ok();
+                }
                 None => {}
             }
         }

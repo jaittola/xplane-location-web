@@ -38,7 +38,7 @@ async fn main() {
         run_signal_handler(controller_endpoint).await;
     });
 
-    run_gpio();
+    run_gpio(&ui_endpoint);
 
     let ws_future = run_webserver(ui_endpoint);
 

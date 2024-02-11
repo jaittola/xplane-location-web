@@ -92,6 +92,8 @@ async fn send_cmd(sock: Arc<UdpSocket>, xp_addr: &str, command: UICommand) {
     xp_cmd.write(&mut writer).unwrap();
     let bytes = writer.into_inner();
 
+    debug!("Sending command {:#?} to XPlane at {}", xp_cmd, xp_addr);
+
     send_to_xp(sock, xp_addr, bytes).await;
 }
 
