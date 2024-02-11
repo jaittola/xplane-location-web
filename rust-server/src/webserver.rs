@@ -1,5 +1,6 @@
 use std::{convert::Infallible, sync::Arc};
 
+use log::{debug, error};
 use tokio::sync::mpsc::Sender as MPSCSender;
 use tokio::{select, sync::Mutex};
 use warp::{
@@ -59,7 +60,7 @@ pub async fn run_webserver(channels: ChannelsUIEndpoint) {
     let (_, srv) =
         warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], 3002), async move {
             stop_rx.recv().await.ok();
-            eprintln!("Stopping webserver as requested");
+            error!("Stopping webserver as requested");
         });
     srv.await;
     data_receiver.abort();
@@ -102,7 +103,7 @@ async fn run_websocket(
             }
             if let Ok(str_msg) = msg.to_str() {
                 if let Ok(cmd) = serde_json::from_str::<UICommand>(str_msg) {
-                    // println!("Got command {}", cmd.command);
+                    debug!("Got command {}", cmd.command);
                     cmdchan.send(cmd).await.ok();
                 }
             }

@@ -1,3 +1,4 @@
+use log::error;
 use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::mpsc::{self, Receiver as MPSCReceiver, Sender as MPSCSender};
 
@@ -15,7 +16,7 @@ impl ChannelsController {
         match self.control.send(msg) {
             Ok(r) => Some(r),
             Err(e) => {
-                eprintln!("Failed to send control msg: {:?}", e);
+                error!("Failed to send control msg: {:?}", e);
                 Some(0)
             }
         }

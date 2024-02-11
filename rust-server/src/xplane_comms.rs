@@ -3,6 +3,7 @@ use crate::{
     channels::ChannelsXPlaneCommEndpoint, control_msgs::ControlMessages, xpc_types::UICommand,
 };
 use binrw::{binrw, io::Cursor, BinReaderExt, BinResult, BinWrite, NullString};
+use log::{debug, error, info};
 use std::{
     io::{self},
     sync::Arc,
@@ -44,12 +45,12 @@ pub async fn run_comms(port: u16, channels: ChannelsXPlaneCommEndpoint) -> io::R
                 datarefs.send(dataref_cache.clone()).await.ok();
             },
             Ok(ControlMessages::Stop()) = control.recv() => {
-                println!("Stopping UDP IO as requested.");
+                info!("Stopping UDP IO as requested.");
                 // sender_handle.abort();
                 return Err(io::Error::new(io::ErrorKind::Other, "Stopped by request"));
             },
             Some(cmd) = ui_cmds.recv () => {
-                // println!("Received command from UI: {:?}", cmd);
+                 debug!("Received command from UI: {:?}", cmd);
                 send_cmd(send.clone(), xp_addr, cmd).await;
             },
             _ = dataref_timer.tick() =>  {
@@ -96,8 +97,8 @@ async fn send_cmd(sock: Arc<UdpSocket>, xp_addr: &str, command: UICommand) {
 
 async fn send_to_xp(sock: Arc<UdpSocket>, xp_addr: &str, bytes: Vec<u8>) {
     match sock.send_to(&bytes, xp_addr).await {
-        Ok(_ /* len */) => {} // println!("Wrote {} bytes to XPlane at {}", len, xp_addr)},
-        Err(e) => eprintln!("Writing RREF message to {} failed: {:?}", xp_addr, e),
+        Ok(len) => debug!("Wrote {} bytes to XPlane at {}", len, xp_addr),
+        Err(e) => error!("Writing RREF message to {} failed: {:?}", xp_addr, e),
     }
 }
 
@@ -314,7 +315,7 @@ fn parse_drefvalues() -> BinResult<Vec<DatarefValue>> {
 }
 
 async fn handle_input(buf: &mut [u8], dataref_cache: &mut ReceivedDatarefs) {
-    //    println!("Content: {:?}", buf);
+    debug!("Content: {:?}", buf);
 
     let mut reader = Cursor::new(buf);
 
@@ -322,17 +323,17 @@ async fn handle_input(buf: &mut [u8], dataref_cache: &mut ReceivedDatarefs) {
         let resu: BinResult<IncomingMsg> = reader.read_ne();
         match resu {
             Ok(IncomingMsg::DataMsg { values }) => {
-                println!("Got datamsg {:?}", values)
+                info!("Got datamsg {:?}", values)
             }
             Ok(IncomingMsg::RrefMsg { values }) => {
-                // println!("Dataref values {:?}", values);
+                debug!("Dataref values {:?}", values);
                 handle_datarefs(&values, dataref_cache);
             }
             Err(_) => break,
         }
     }
 
-    // println!("Dataref cache: {:?}", dataref_cache);
+    debug!("Dataref cache: {:?}", dataref_cache);
 }
 
 fn handle_datarefs(values: &Vec<DatarefValue>, dataref_cache: &mut ReceivedDatarefs) {
@@ -342,10 +343,10 @@ fn handle_datarefs(values: &Vec<DatarefValue>, dataref_cache: &mut ReceivedDatar
 }
 
 fn handle_dataref(id: u32, value: f32, datarefs: &mut ReceivedDatarefs) {
-    //    println!("Got dataref {} = {:?}", id, value);
+    debug!("Got dataref {} = {:?}", id, value);
 
     if id == 0 || id > RREF_IDENTITIES.len() as u32 {
-        eprintln!("Got dataref with id outside the known values: {}", id);
+        error!("Got dataref with id outside the known values: {}", id);
         return;
     }
 

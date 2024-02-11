@@ -1,6 +1,6 @@
 #[cfg(not(target_os = "linux"))]
 pub fn run_gpio() {
-    println!("Not a linux platform, not initializing the GPIO.");
+    log::info!("Not a linux platform, not initializing the GPIO.");
 }
 
 #[cfg(target_os = "linux")]
@@ -11,6 +11,7 @@ pub fn run_gpio() {
 #[cfg(target_os = "linux")]
 mod gpio_linux {
 
+    use log::{debug, error, info};
     use tokio_gpiod::{Bias, Chip, Edge, EdgeDetect, Options};
 
     use crate::{
@@ -20,11 +21,11 @@ mod gpio_linux {
 
     pub async fn gpio_main() -> Result<(), std::io::Error> {
         let chip = Chip::new("gpiochip0").await.map_err(|e| {
-            eprintln!("Opening GPIO chip failed: {:?}", e);
+            error!("Opening GPIO chip failed: {:?}", e);
             std::io::Error::other(e.to_string())
         })?;
 
-        println!(
+        info!(
             "Chip {}, label {} has {} lines",
             chip.name(),
             chip.label(),
@@ -49,7 +50,7 @@ mod gpio_linux {
             .consumer("xplane-location-web"); // optionally set consumer string
 
         let mut gpio_inputs = chip.request_lines(opts).await.map_err(|e| {
-            eprintln!("Failed getting chip lines: {:?}", e);
+            error!("Failed getting chip lines: {:?}", e);
             e
         })?;
 
@@ -58,13 +59,13 @@ mod gpio_linux {
         loop {
             let event = gpio_inputs.read_event().await?;
 
-            println!("event: {:?}", event);
+            debug!("event: {:?}", event);
 
             match event_detect.on_event(event.line as usize, map_edge(event.edge), &event.time) {
                 Some(GpioEvent::Encoder(ee)) => {
-                    println!("Got encoder event {:?}", ee);
+                    info!("Got encoder event {:?}", ee);
                 }
-                Some(e) => println!("Got another event {:?}", e),
+                Some(e) => info!("Got another event {:?}", e),
                 None => {}
             }
         }

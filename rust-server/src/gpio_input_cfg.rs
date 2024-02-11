@@ -2,6 +2,7 @@
 
 use crate::gpio_event_detect::{ButtonInput, EncoderCommands, EncoderInput, GpioInput};
 
+use log::error;
 use std::fs::File;
 use std::io::BufReader;
 
@@ -37,13 +38,13 @@ pub fn sample_inputs() -> Vec<GpioInput> {
 pub fn read_input_config() -> Result<Vec<GpioInput>, std::io::Error> {
     let cfgfile = "hw-inputs.json";
     let input_file = File::open(cfgfile).map_err(|e| {
-        eprintln!("Reading configuration file {} failed: {:?}", cfgfile, e);
+        error!("Reading configuration file {} failed: {:?}", cfgfile, e);
         e
     })?;
     let buf_reader = BufReader::new(input_file);
     serde_json::from_reader(buf_reader).map_err(|e| {
         let s = e.to_string();
-        eprintln!("Reading configuration file {} failed: {:?}", cfgfile, s);
+        error!("Reading configuration file {} failed: {:?}", cfgfile, s);
         std::io::Error::other(s)
     })
 }
