@@ -1,5 +1,7 @@
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
+use std::time::Duration;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
@@ -21,9 +23,36 @@ pub struct ButtonEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct ResolvedPendingEvent {
+    pub command: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct SwitchPendingEvent {
+    pub pin: usize,
+}
+
+#[derive(Debug, Clone)]
+pub enum PendingEvent {
+    SwitchPending(SwitchPendingEvent),
+}
+
+impl PendingEvent {
+    pub fn pin(&self) -> usize {
+        match self {
+            PendingEvent::SwitchPending(SwitchPendingEvent { pin, .. }) => *pin,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum GpioEvent {
     Encoder(EncoderEvent),
     Button(ButtonEvent),
+    Pending {
+        debounce: Duration,
+        event: PendingEvent,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

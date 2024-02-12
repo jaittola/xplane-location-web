@@ -4,8 +4,14 @@ use std::time::Duration;
 
 use super::types::{
     ButtonEvent, ButtonInput, Edge, EncoderEvent, EncoderEventType, EncoderInput, GpioEvent,
-    GpioInput,
+    GpioInput, PendingEvent, ResolvedPendingEvent, SwitchInput, SwitchPendingEvent,
 };
+
+pub struct GpioEventDetect {
+    pin_states: [u8; MAX_PINS],
+    input_slots: Vec<InputSlot>,
+    last_event_times: [Duration; MAX_PINS],
+}
 
 #[derive(Debug, Clone)]
 struct EncoderWithPins {
@@ -14,20 +20,22 @@ struct EncoderWithPins {
     pin2: usize,
 }
 
-pub struct GpioEventDetect {
-    pin_states: [u8; MAX_PINS],
-    input_slots: Vec<InputSlot>,
-    last_event_times: [Duration; MAX_PINS],
-}
-
 const MAX_PINS: usize = 100;
 const DEBOUNCE: Duration = Duration::from_millis(50);
+
+const PINSTATE_UNUSED: u8 = 0xff;
+const PINSTATE_SWITCH_LOW: u8 = 0;
+const PINSTATE_SWITCH_HIGH: u8 = 1;
+const PINSTATE_SWITCH_PENDING_WAS_LOW: u8 = 0x10;
+const PINSTATE_SWITCH_PENDING_WAS_HIGH: u8 = 0x11;
+const PINSTATE_SWITCH_PENDING_WAS_UNUSED: u8 = 0x12;
 
 #[derive(Debug, Clone)]
 enum InputSlot {
     Unused,
     AssignedToEncoder { encoder: EncoderWithPins },
     AssignedToButton { button: ButtonInput },
+    AssignedToSwitch { switch: SwitchInput },
 }
 
 impl GpioEventDetect {
@@ -36,7 +44,7 @@ impl GpioEventDetect {
         input_slots.resize(MAX_PINS, InputSlot::Unused);
 
         let mut event_detect = GpioEventDetect {
-            pin_states: [0xff; MAX_PINS],
+            pin_states: [PINSTATE_UNUSED; MAX_PINS],
             input_slots,
             last_event_times: [Duration::ZERO; MAX_PINS],
         };
@@ -46,7 +54,7 @@ impl GpioEventDetect {
             idx = match input {
                 GpioInput::Encoder(encoder) => event_detect.register_encoder(idx, encoder),
                 GpioInput::Button(button) => event_detect.register_button(idx, button),
-                GpioInput::Switch(_) => idx,
+                GpioInput::Switch(switch) => event_detect.register_switch(idx, switch),
             };
         }
 
@@ -78,6 +86,14 @@ impl GpioEventDetect {
         pin + 1
     }
 
+    pub fn register_switch(&mut self, pin: usize, switch: &SwitchInput) -> usize {
+        self.input_slots[pin] = InputSlot::AssignedToSwitch {
+            switch: switch.clone(),
+        };
+
+        pin + 1
+    }
+
     pub fn on_event(&mut self, pin: usize, edge: Edge, time: &Duration) -> Option<GpioEvent> {
         match &self.input_slots[pin] {
             InputSlot::AssignedToEncoder { encoder } => {
@@ -93,8 +109,41 @@ impl GpioEventDetect {
                 &mut self.last_event_times,
             )
             .map(|be| GpioEvent::Button(be)),
+            InputSlot::AssignedToSwitch { .. } => on_switch_event(pin, &mut self.pin_states),
             _ => None,
         }
+    }
+
+    pub fn on_pending_event(
+        &mut self,
+        pending_event: &PendingEvent,
+        line_value: bool,
+    ) -> Option<ResolvedPendingEvent> {
+        let pin_state = self.pin_states[pending_event.pin()];
+
+        let switch = match &self.input_slots[pending_event.pin()] {
+            InputSlot::AssignedToSwitch { switch } => Some(switch),
+            _ => None,
+        }?;
+
+        let (cmd, next_line_value) = match (pin_state, line_value) {
+            (PINSTATE_SWITCH_PENDING_WAS_LOW, true)
+            | (PINSTATE_SWITCH_PENDING_WAS_UNUSED, true) => {
+                (Some(switch.command_high.clone()), PINSTATE_SWITCH_HIGH)
+            }
+            (PINSTATE_SWITCH_PENDING_WAS_HIGH, true) => (None, PINSTATE_SWITCH_HIGH),
+
+            (PINSTATE_SWITCH_PENDING_WAS_HIGH, false)
+            | (PINSTATE_SWITCH_PENDING_WAS_UNUSED, false) => {
+                (Some(switch.command_low.clone()), PINSTATE_SWITCH_LOW)
+            }
+            (PINSTATE_SWITCH_PENDING_WAS_LOW, false) => (None, PINSTATE_SWITCH_LOW),
+            _ => (None, pin_state),
+        };
+
+        self.pin_states[pending_event.pin()] = next_line_value;
+
+        cmd.and_then(|command| Some(ResolvedPendingEvent { command }))
     }
 }
 
@@ -179,10 +228,36 @@ fn get_other_pin(pin: usize, encoder: &EncoderWithPins) -> usize {
     }
 }
 
+fn on_switch_event(pin: usize, pin_states: &mut [u8; MAX_PINS]) -> Option<GpioEvent> {
+    let pending = Some(GpioEvent::Pending {
+        debounce: DEBOUNCE,
+        event: PendingEvent::SwitchPending(SwitchPendingEvent { pin }),
+    });
+
+    match pin_states[pin] {
+        PINSTATE_UNUSED => {
+            pin_states[pin] = PINSTATE_SWITCH_PENDING_WAS_UNUSED;
+            pending
+        }
+        PINSTATE_SWITCH_HIGH => {
+            pin_states[pin] = PINSTATE_SWITCH_PENDING_WAS_HIGH;
+            pending
+        }
+        PINSTATE_SWITCH_LOW => {
+            pin_states[pin] = PINSTATE_SWITCH_PENDING_WAS_LOW;
+            pending
+        }
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod gpio_tests {
 
     use std::time::Duration;
+
+    use crate::gpio::types::PendingEvent;
+    use crate::gpio::types::SwitchInput;
 
     use super::ButtonInput;
     use super::Edge;
@@ -194,7 +269,7 @@ mod gpio_tests {
 
     use super::super::types::EncoderCommands;
 
-    fn test_inputs() -> [GpioInput; 2] {
+    fn test_inputs() -> Vec<GpioInput> {
         [
             GpioInput::Encoder(EncoderInput {
                 gpio1: 14,
@@ -209,7 +284,18 @@ mod gpio_tests {
                 gpio: 16,
                 command: String::from("tapped"),
             }),
+            GpioInput::Switch(SwitchInput {
+                gpio: 17,
+                command_high: String::from("sw1_high"),
+                command_low: String::from("sw1_low"),
+            }),
+            GpioInput::Switch(SwitchInput {
+                gpio: 18,
+                command_high: String::from("sw2_high"),
+                command_low: String::from("sw2_low"),
+            }),
         ]
+        .to_vec()
     }
 
     fn t(ms: u64) -> Duration {
@@ -312,5 +398,73 @@ mod gpio_tests {
             }
             _ => panic!("Got unexpected event {:?}", ev),
         }
+    }
+
+    #[test]
+    fn switch_toggle_simple() {
+        let mut input_map = GpioEventDetect::new(&test_inputs());
+
+        let ev = success_swinput(3, &mut input_map);
+        let resolved_pending = input_map.on_pending_event(&ev, true).unwrap();
+        assert_eq!(resolved_pending.command, "sw1_high");
+    }
+
+    #[test]
+    fn switch_toggle_back_forth() {
+        let mut input_map = GpioEventDetect::new(&test_inputs());
+
+        let ev = success_swinput(3, &mut input_map);
+        let resolved_pending = input_map.on_pending_event(&ev, true).unwrap();
+        assert_eq!(resolved_pending.command, "sw1_high");
+
+        let ev2 = success_swinput(3, &mut input_map);
+        let resolved_pending2 = input_map.on_pending_event(&ev2, false).unwrap();
+        assert_eq!(resolved_pending2.command, "sw1_low");
+    }
+
+    #[test]
+    fn switch_toggle_back_forth_reverse() {
+        let mut input_map = GpioEventDetect::new(&test_inputs());
+
+        let ev = success_swinput(3, &mut input_map);
+        let resolved_pending = input_map.on_pending_event(&ev, false).unwrap();
+        assert_eq!(resolved_pending.command, "sw1_low");
+
+        let ev2 = success_swinput(3, &mut input_map);
+        let resolved_pending2 = input_map.on_pending_event(&ev2, true).unwrap();
+        assert_eq!(resolved_pending2.command, "sw1_high");
+    }
+
+    #[test]
+    fn switch_toggle_back_forth_deduplicate() {
+        let mut input_map = GpioEventDetect::new(&test_inputs());
+
+        let ev = success_swinput(3, &mut input_map);
+        let resolved_pending = input_map.on_pending_event(&ev, true).unwrap();
+        assert_eq!(resolved_pending.command, "sw1_high");
+
+        let ev = success_swinput(3, &mut input_map);
+        assert!(input_map.on_pending_event(&ev, true).is_none());
+
+        let ev2 = success_swinput(3, &mut input_map);
+        let resolved_pending2 = input_map.on_pending_event(&ev2, false).unwrap();
+        assert_eq!(resolved_pending2.command, "sw1_low");
+    }
+
+    fn success_swinput(pin: usize, input_map: &mut GpioEventDetect) -> PendingEvent {
+        let pending = input_map.on_event(pin, Edge::Falling, &t(0));
+        let ev = match pending {
+            Some(GpioEvent::Pending { debounce, event }) => {
+                assert_eq!(debounce, super::DEBOUNCE);
+                assert_eq!(event.pin(), pin);
+                event
+            }
+            _ => panic!("Got unexpected event {:?}", pending),
+        };
+        // We'll do some extra events, they shouldn't trigger anything.
+        assert!(input_map.on_event(pin, Edge::Falling, &t(0)).is_none());
+        assert!(input_map.on_event(pin, Edge::Rising, &t(0)).is_none());
+
+        ev
     }
 }

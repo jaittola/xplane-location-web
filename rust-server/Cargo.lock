@@ -1048,6 +1048,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "pin-project-lite",
+ "slab",
  "tokio",
  "tracing",
 ]
@@ -1358,5 +1359,6 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-gpiod",
+ "tokio-util",
  "warp",
 ]
