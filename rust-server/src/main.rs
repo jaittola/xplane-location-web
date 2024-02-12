@@ -1,8 +1,6 @@
 mod channels;
 mod control_msgs;
 mod gpio;
-mod gpio_event_detect;
-mod gpio_input_cfg;
 mod webserver;
 mod xpc_types;
 mod xplane_comms;

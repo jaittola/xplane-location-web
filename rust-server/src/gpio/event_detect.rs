@@ -2,81 +2,16 @@
 
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
+use super::types::{
+    ButtonEvent, ButtonInput, Edge, EncoderEvent, EncoderEventType, EncoderInput, GpioEvent,
+    GpioInput,
+};
 
 #[derive(Debug, Clone)]
-pub enum EncoderEventType {
-    Right,
-    Left,
-}
-
-#[derive(Debug, Clone)]
-pub struct EncoderEvent {
-    pub event_type: EncoderEventType,
-    pub encoder_name: String,
-    pub command: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct ButtonEvent {
-    pub command: String,
-}
-
-#[derive(Debug, Clone)]
-pub enum GpioEvent {
-    Encoder(EncoderEvent),
-    Button(ButtonEvent),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EncoderInput {
-    pub gpio1: usize,
-    pub gpio2: usize,
-    pub command: EncoderCommands,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ButtonInput {
-    pub gpio: usize,
-    pub command: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SwitchInput {
-    pub gpio: usize,
-    pub command_high: String,
-    pub command_low: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum GpioInput {
-    #[serde(rename = "encoder")]
-    Encoder(EncoderInput),
-    #[serde(rename = "button")]
-    Button(ButtonInput),
-    #[serde(rename = "switch")]
-    Switch(SwitchInput),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EncoderCommands {
-    pub encoder_name: String,
-    pub cmd_right: String,
-    pub cmd_left: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct EncoderWithPins {
+struct EncoderWithPins {
     encoder: EncoderInput,
     pin1: usize,
     pin2: usize,
-}
-
-#[derive(Debug, Clone)]
-pub enum Edge {
-    Falling = 0,
-    Rising = 1,
 }
 
 pub struct GpioEventDetect {
@@ -251,12 +186,13 @@ mod gpio_tests {
 
     use super::ButtonInput;
     use super::Edge;
-    use super::EncoderCommands;
     use super::EncoderEventType;
     use super::EncoderInput;
     use super::GpioEvent;
     use super::GpioEventDetect;
     use super::GpioInput;
+
+    use super::super::types::EncoderCommands;
 
     fn test_inputs() -> [GpioInput; 2] {
         [
