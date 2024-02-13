@@ -3,9 +3,10 @@ Description=Web UI and hardware controls for XPlane
 After=network.target
 
 [Service]
-Type=simple
+Type=exec
 User=jaittola
-ExecStart=/usr/bin/node /home/jaittola/xplane-location-web/server.js
+WorkingDirectory=/home/jaittola/xplane-location-web/rust-server
+ExecStart=/home/jaittola/xplane-location-web/rust-server/xplw -g hw-inputs.json -w ../www
 Restart=on-failure
 
 [Install]
