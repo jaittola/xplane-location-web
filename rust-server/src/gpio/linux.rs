@@ -15,7 +15,7 @@ use super::input_config::read_input_config;
 use super::types::{Edge as GpioEdge, GpioEvent, GpioInput, PendingEvent};
 use crate::xpc_types::UICommand;
 
-pub async fn gpio_main(ui_cmds: Sender<UICommand>) -> Result<(), io::Error> {
+pub async fn gpio_main(ui_cmds: Sender<UICommand>, config_file: String) -> Result<(), io::Error> {
     let chip = Chip::new("gpiochip0").await.map_err(|e| {
         error!("Opening GPIO chip failed: {:?}", e);
         io::Error::other(e.to_string())
@@ -28,7 +28,7 @@ pub async fn gpio_main(ui_cmds: Sender<UICommand>) -> Result<(), io::Error> {
         chip.num_lines()
     );
 
-    let inputs = read_input_config()?;
+    let inputs = read_input_config(&config_file)?;
 
     let input_pins = inputs
         .iter()

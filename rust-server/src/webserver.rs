@@ -15,7 +15,7 @@ use crate::{
     xplane_comms::ReceivedDatarefs,
 };
 
-pub async fn run_webserver(channels: ChannelsUIEndpoint) {
+pub async fn run_webserver(channels: ChannelsUIEndpoint, port: u16, web_files_dir: &String) {
     let datarefs = Arc::new(Mutex::new(ReceivedDatarefs {
         ..Default::default()
     }));
@@ -54,11 +54,11 @@ pub async fn run_webserver(channels: ChannelsUIEndpoint) {
         .map(|ws: warp::ws::Ws, datarefs, cmdchan| {
             ws.on_upgrade(|websocket| run_websocket(websocket, datarefs, cmdchan))
         });
-    let static_files = warp::any().and(warp::fs::dir("../www"));
+    let static_files = warp::any().and(warp::fs::dir(web_files_dir.clone()));
     let routes = readme.or(datarefs_route).or(websocket).or(static_files);
 
     let (_, srv) =
-        warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], 3002), async move {
+        warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], port), async move {
             stop_rx.recv().await.ok();
             error!("Stopping webserver as requested");
         });

@@ -6,16 +6,15 @@ use log::error;
 use std::fs::File;
 use std::io::BufReader;
 
-pub fn read_input_config() -> Result<Vec<GpioInput>, std::io::Error> {
-    let cfgfile = "hw-inputs.json";
-    let input_file = File::open(cfgfile).map_err(|e| {
-        error!("Reading configuration file {} failed: {:?}", cfgfile, e);
+pub fn read_input_config(config_file: &String) -> Result<Vec<GpioInput>, std::io::Error> {
+    let input_file = File::open(config_file).map_err(|e| {
+        error!("Reading configuration file {} failed: {:?}", config_file, e);
         e
     })?;
     let buf_reader = BufReader::new(input_file);
     serde_json::from_reader(buf_reader).map_err(|e| {
         let s = e.to_string();
-        error!("Reading configuration file {} failed: {:?}", cfgfile, s);
+        error!("Reading configuration file {} failed: {:?}", config_file, s);
         std::io::Error::other(s)
     })
 }
@@ -50,7 +49,7 @@ mod gpio_input_cfg_tests {
 
     #[test]
     fn deserialize_current_config() {
-        let cfg = read_input_config().unwrap();
+        let cfg = read_input_config(&String::from("hw-inputs.json")).unwrap();
         println!("Current configuration is {:#?}", cfg);
     }
 
