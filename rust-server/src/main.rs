@@ -12,7 +12,7 @@ use gpio::run_gpio;
 use log::{self, error, info};
 
 use webserver::run_webserver;
-use xplane_comms::run_comms;
+use xplane_comms::run_xplane_udp;
 
 use clap::Parser;
 
@@ -63,7 +63,7 @@ async fn main() {
     let ws_future = run_webserver(ui_endpoint, args.web_port, &args.web_directory);
 
     tokio::spawn(async move {
-        if let Err(err) = run_comms(args.udp_port, xplane_comm_endpoint).await {
+        if let Err(err) = run_xplane_udp(args.udp_port, xplane_comm_endpoint).await {
             error!("Running the UDP communication failed: {:?}", err);
             std::process::exit(1);
         }

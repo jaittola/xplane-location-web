@@ -14,7 +14,7 @@ use tokio::{
     time::{interval, sleep},
 };
 
-pub async fn run_comms(port: u16, channels: ChannelsXPlaneCommEndpoint) -> io::Result<()> {
+pub async fn run_xplane_udp(port: u16, channels: ChannelsXPlaneCommEndpoint) -> io::Result<()> {
     let xp_addr = "192.168.1.102:49000";
 
     let addr = format!("0.0.0.0:{}", port);
