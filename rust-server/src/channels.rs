@@ -32,7 +32,6 @@ pub struct ChannelsXPlaneCommEndpoint {
 
 #[derive(Debug)]
 pub struct ChannelsUIEndpoint {
-    pub control: Receiver<ControlMessages>,
     pub data: MPSCReceiver<ReceivedDatarefs>,
     pub ui_cmds: MPSCSender<UICommand>,
 }
@@ -52,7 +51,6 @@ pub fn create_channels() -> (
         ui_cmds: ui_cmds_rx,
     };
     let ui_endpoint = ChannelsUIEndpoint {
-        control: ctrl_tx.subscribe(),
         data: data_rx,
         ui_cmds: ui_cmds_tx,
     };

@@ -5,8 +5,7 @@ mod webserver;
 mod xpc_types;
 mod xplane_comms;
 
-use channels::{create_channels, ChannelsController};
-use control_msgs::ControlMessages;
+use channels::create_channels;
 use env_logger::{self, Env};
 use gpio::run_gpio;
 use log::{self, error, info};
@@ -48,10 +47,10 @@ async fn main() {
 
     info!("Command line args: {:#?}", args);
 
-    let (controller_endpoint, xplane_comm_endpoint, ui_endpoint) = create_channels();
+    let (_controller_endpoint, xplane_comm_endpoint, ui_endpoint) = create_channels();
 
     tokio::spawn(async move {
-        run_signal_handler(controller_endpoint).await;
+        run_signal_handler().await;
     });
 
     if let Some(gpio_conf) = args.gpio_conf {
@@ -72,7 +71,7 @@ async fn main() {
     ws_future.await
 }
 
-async fn run_signal_handler(tx_chan: ChannelsController) {
+async fn run_signal_handler() {
     use tokio::signal::unix::{signal, SignalKind};
 
     let mut signal_terminate = signal(SignalKind::terminate()).unwrap();
@@ -81,11 +80,11 @@ async fn run_signal_handler(tx_chan: ChannelsController) {
     tokio::select! {
         _ = signal_terminate.recv() => {
             error!("Received SIGTERM.");
-            tx_chan.send_control(ControlMessages::Stop());
+            std::process::exit(1);
         }
         _ = signal_interrupt.recv() => {
             error!("Received SIGINT.");
-            tx_chan.send_control(ControlMessages::Stop());
+            std::process::exit(1);
         }
     };
 }

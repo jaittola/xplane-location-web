@@ -1,6 +1,6 @@
 use std::{convert::Infallible, sync::Arc};
 
-use log::{debug, error};
+use log::debug;
 use tokio::sync::mpsc::Sender as MPSCSender;
 use tokio::{select, sync::Mutex};
 use warp::{
@@ -10,10 +10,7 @@ use warp::{
 
 use futures_util::{SinkExt, StreamExt};
 
-use crate::{
-    channels::ChannelsUIEndpoint, control_msgs::ControlMessages, xpc_types::UICommand,
-    xplane_comms::ReceivedDatarefs,
-};
+use crate::{channels::ChannelsUIEndpoint, xpc_types::UICommand, xplane_comms::ReceivedDatarefs};
 
 pub async fn run_webserver(channels: ChannelsUIEndpoint, port: u16, web_files_dir: &String) {
     let datarefs = Arc::new(Mutex::new(ReceivedDatarefs {
@@ -21,9 +18,7 @@ pub async fn run_webserver(channels: ChannelsUIEndpoint, port: u16, web_files_di
     }));
     let datarefs_clone = datarefs.clone();
 
-    let (stop_tx, mut stop_rx) = tokio::sync::broadcast::channel(2);
     let ChannelsUIEndpoint {
-        mut control,
         mut data,
         ui_cmds: commands_from_ui,
     } = channels;
@@ -34,10 +29,6 @@ pub async fn run_webserver(channels: ChannelsUIEndpoint, port: u16, web_files_di
                 Some(dr) = data.recv() => {
                     let mut datarefs_unlocked = datarefs.lock().await;
                     *datarefs_unlocked = dr;
-                },
-                Ok(ControlMessages::Stop()) = control.recv() => {
-                    stop_tx.send(()).ok();
-                    break;
                 },
             }
         }
@@ -57,12 +48,7 @@ pub async fn run_webserver(channels: ChannelsUIEndpoint, port: u16, web_files_di
     let static_files = warp::any().and(warp::fs::dir(web_files_dir.clone()));
     let routes = readme.or(datarefs_route).or(websocket).or(static_files);
 
-    let (_, srv) =
-        warp::serve(routes).bind_with_graceful_shutdown(([0, 0, 0, 0], port), async move {
-            stop_rx.recv().await.ok();
-            error!("Stopping webserver as requested");
-        });
-    srv.await;
+    warp::serve(routes).bind(([0, 0, 0, 0], port)).await;
     data_receiver.abort();
 }
 

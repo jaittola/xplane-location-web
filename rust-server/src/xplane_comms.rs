@@ -1,7 +1,5 @@
 pub use crate::xpc_types::ReceivedDatarefs;
-use crate::{
-    channels::ChannelsXPlaneCommEndpoint, control_msgs::ControlMessages, xpc_types::UICommand,
-};
+use crate::{channels::ChannelsXPlaneCommEndpoint, xpc_types::UICommand};
 use binrw::{binrw, io::Cursor, BinReaderExt, BinResult, BinWrite, NullString};
 use log::{debug, error, info};
 use std::{
@@ -44,11 +42,7 @@ pub async fn run_xplane_udp(port: u16, channels: ChannelsXPlaneCommEndpoint) -> 
                 handle_input(&mut buf[..len], &mut dataref_cache).await;
                 datarefs.send(dataref_cache.clone()).await.ok();
             },
-            Ok(ControlMessages::Stop()) = control.recv() => {
-                info!("Stopping UDP IO as requested.");
-                // sender_handle.abort();
-                return Err(io::Error::new(io::ErrorKind::Other, "Stopped by request"));
-            },
+            Ok(_) = control.recv() => { },
             Some(cmd) = ui_cmds.recv () => {
                  debug!("Received command from UI: {:?}", cmd);
                 send_cmd(send.clone(), xp_addr, cmd).await;
