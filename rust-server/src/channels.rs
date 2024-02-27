@@ -1,5 +1,4 @@
 use log::error;
-use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::mpsc::{self, Receiver as MPSCReceiver, Sender as MPSCSender};
 
 use crate::control_msgs::ControlMessages;
@@ -8,24 +7,20 @@ use crate::xplane_comms::ReceivedDatarefs;
 
 #[derive(Debug)]
 pub struct ChannelsController {
-    control: Sender<ControlMessages>,
+    control: MPSCSender<ControlMessages>,
 }
 
 impl ChannelsController {
-    pub fn send_control(&self, msg: ControlMessages) -> Option<usize> {
-        match self.control.send(msg) {
-            Ok(r) => Some(r),
-            Err(e) => {
-                error!("Failed to send control msg: {:?}", e);
-                Some(0)
-            }
+    pub async fn send_control(&self, msg: ControlMessages) {
+        if let Err(e) = self.control.send(msg).await {
+            error!("Failed to send control msg: {:?}", e);
         }
     }
 }
 
 #[derive(Debug)]
 pub struct ChannelsXPlaneCommEndpoint {
-    pub control: Receiver<ControlMessages>,
+    pub control: MPSCReceiver<ControlMessages>,
     pub datarefs: MPSCSender<ReceivedDatarefs>,
     pub ui_cmds: MPSCReceiver<UICommand>,
 }
@@ -41,7 +36,7 @@ pub fn create_channels() -> (
     ChannelsXPlaneCommEndpoint,
     ChannelsUIEndpoint,
 ) {
-    let (ctrl_tx, ctrl_rx) = broadcast::channel::<ControlMessages>(2);
+    let (ctrl_tx, ctrl_rx) = mpsc::channel::<ControlMessages>(2);
     let (data_tx, data_rx) = mpsc::channel::<ReceivedDatarefs>(2);
     let (ui_cmds_tx, ui_cmds_rx) = mpsc::channel::<UICommand>(20);
 

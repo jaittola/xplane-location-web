@@ -3,6 +3,7 @@ mod control_msgs;
 mod gpio;
 mod webserver;
 mod xpc_types;
+mod xplane_beacon;
 mod xplane_comms;
 
 use channels::create_channels;
@@ -11,6 +12,7 @@ use gpio::run_gpio;
 use log::{self, error, info};
 
 use webserver::run_webserver;
+use xplane_beacon::receive_xplane_beacon;
 use xplane_comms::run_xplane_udp;
 
 use clap::Parser;
@@ -47,7 +49,7 @@ async fn main() {
 
     info!("Command line args: {:#?}", args);
 
-    let (_controller_endpoint, xplane_comm_endpoint, ui_endpoint) = create_channels();
+    let (controller_endpoint, xplane_comm_endpoint, ui_endpoint) = create_channels();
 
     tokio::spawn(async move {
         run_signal_handler().await;
@@ -60,6 +62,16 @@ async fn main() {
     }
 
     let ws_future = run_webserver(ui_endpoint, args.web_port, &args.web_directory);
+
+    tokio::spawn(async move {
+        if let Err(err) = receive_xplane_beacon(controller_endpoint).await {
+            error!(
+                "Running the XPlane multicast beacon receiver failed: {:?}",
+                err
+            );
+            std::process::exit(1);
+        }
+    });
 
     tokio::spawn(async move {
         if let Err(err) = run_xplane_udp(args.udp_port, xplane_comm_endpoint).await {

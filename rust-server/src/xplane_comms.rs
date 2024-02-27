@@ -1,9 +1,12 @@
 pub use crate::xpc_types::ReceivedDatarefs;
-use crate::{channels::ChannelsXPlaneCommEndpoint, xpc_types::UICommand};
+use crate::{
+    channels::ChannelsXPlaneCommEndpoint, control_msgs::ControlMessages, xpc_types::UICommand,
+};
 use binrw::{binrw, io::Cursor, BinReaderExt, BinResult, BinWrite, NullString};
 use log::{debug, error, info};
 use std::{
     io::{self},
+    net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4},
     sync::Arc,
     time::Duration,
 };
@@ -13,9 +16,7 @@ use tokio::{
 };
 
 pub async fn run_xplane_udp(port: u16, channels: ChannelsXPlaneCommEndpoint) -> io::Result<()> {
-    let xp_addr = "192.168.1.102:49000";
-
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port);
     let sock = UdpSocket::bind(addr).await?;
 
     let receive = Arc::new(sock);
@@ -31,10 +32,11 @@ pub async fn run_xplane_udp(port: u16, channels: ChannelsXPlaneCommEndpoint) -> 
         mut control,
         datarefs,
         mut ui_cmds,
-        ..
     } = channels;
 
     let mut dataref_timer = interval(Duration::from_secs(30));
+
+    let mut xp_addr: Option<SocketAddr> = None;
 
     loop {
         tokio::select! {
@@ -42,22 +44,49 @@ pub async fn run_xplane_udp(port: u16, channels: ChannelsXPlaneCommEndpoint) -> 
                 handle_input(&mut buf[..len], &mut dataref_cache).await;
                 datarefs.send(dataref_cache.clone()).await.ok();
             },
-            Ok(_) = control.recv() => { },
+            ctrlmsg = control.recv() => {
+                match ctrlmsg {
+                    Some(ControlMessages::XPlaneAddr { addr, port }) => {
+                        if let Some(new_addr) = update_xp_addr(&xp_addr, addr, port) {
+                            info!("Got new XPlane address {:?}", new_addr.to_string());
+                            xp_addr = Some(new_addr);
+                            request_datarefs(send.clone(), &new_addr).await;
+                        }
+                    },
+                    None => { info!("Got nothing from control socket"); },
+                }
+            },
             Some(cmd) = ui_cmds.recv () => {
-                 debug!("Received command from UI: {:?}", cmd);
-                send_cmd(send.clone(), xp_addr, cmd).await;
+                debug!("Received command from UI: {:?}", cmd);
+                if let Some(addr) = xp_addr {
+                    send_cmd(send.clone(), &addr, cmd).await;
+                }
             },
             _ = dataref_timer.tick() =>  {
-                request_datarefs(send.clone(), xp_addr).await;
+                debug!("Dataref timer.");
+                if let Some(addr) = xp_addr {
+                    request_datarefs(send.clone(), &addr).await;
+                }
             }
         }
     }
 }
 
-async fn request_datarefs(sock: Arc<UdpSocket>, xp_addr: &str) {
-    let target = String::from(xp_addr);
+fn update_xp_addr(prev_addr: &Option<SocketAddr>, addr: IpAddr, port: u16) -> Option<SocketAddr> {
+    let new_addr = SocketAddr::new(addr, port);
+    if let Some(prev) = prev_addr {
+        if *prev == new_addr {
+            return None;
+        }
+    }
 
+    Some(new_addr)
+}
+
+async fn request_datarefs(sock: Arc<UdpSocket>, xp_addr: &SocketAddr) {
+    let ac = xp_addr.clone();
     tokio::spawn(async move {
+        info!("Requesting datarefs from {}", ac);
         for (i, dref_identity) in RREF_IDENTITIES.iter().enumerate() {
             let index = (i + 1) as u32;
             let request = RrefRequest {
@@ -72,13 +101,13 @@ async fn request_datarefs(sock: Arc<UdpSocket>, xp_addr: &str) {
 
             assert_eq!(bytes.len(), 413);
 
-            send_to_xp(sock.clone(), &target, bytes).await;
+            send_to_xp(sock.clone(), &ac, bytes).await;
             sleep(Duration::from_millis(20)).await;
         }
     });
 }
 
-async fn send_cmd(sock: Arc<UdpSocket>, xp_addr: &str, command: UICommand) {
+async fn send_cmd(sock: Arc<UdpSocket>, xp_addr: &SocketAddr, command: UICommand) {
     let xp_cmd = XPlaneCmd {
         command: command.command.into(),
     };
@@ -91,7 +120,7 @@ async fn send_cmd(sock: Arc<UdpSocket>, xp_addr: &str, command: UICommand) {
     send_to_xp(sock, xp_addr, bytes).await;
 }
 
-async fn send_to_xp(sock: Arc<UdpSocket>, xp_addr: &str, bytes: Vec<u8>) {
+async fn send_to_xp(sock: Arc<UdpSocket>, xp_addr: &SocketAddr, bytes: Vec<u8>) {
     match sock.send_to(&bytes, xp_addr).await {
         Ok(len) => debug!("Wrote {} bytes to XPlane at {}", len, xp_addr),
         Err(e) => error!("Writing RREF message to {} failed: {:?}", xp_addr, e),
