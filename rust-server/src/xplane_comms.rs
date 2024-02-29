@@ -407,8 +407,8 @@ fn handle_dataref(id: u32, value: f32, datarefs: &mut ReceivedDatarefs) {
         RrefIdentifier::TAS => datarefs.tas = value,
         RrefIdentifier::MagHeading => datarefs.mag_heading = value,
         RrefIdentifier::Altitude => datarefs.altitude = value,
-        RrefIdentifier::Lat => datarefs.lat = value,
-        RrefIdentifier::Lon => datarefs.lon = value,
+        RrefIdentifier::Lat => datarefs.lat = Some(value),
+        RrefIdentifier::Lon => datarefs.lon = Some(value),
     }
 }
 

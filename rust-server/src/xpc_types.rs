@@ -83,9 +83,9 @@ pub struct ReceivedDatarefs {
 
     pub altitude: f32,
 
-    pub lat: f32,
+    pub lat: Option<f32>,
 
-    pub lon: f32,
+    pub lon: Option<f32>,
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
