@@ -12,6 +12,8 @@
     var longitude
     var bearing
 
+    var isDraggingMap = false
+
     const currentDataValues = {}
 
     const commands = {
@@ -54,6 +56,7 @@
         setupDataPanel(variant)
         setupControls()
         setupClearButton()
+        setupFollowButton()
     }
 
     function setupSocket() {
@@ -76,6 +79,9 @@
             attribution:
                 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
         }).addTo(map)
+        map.on("dragstart", () => {
+            isDraggingMap = true
+        })
     }
 
     function greenwich() {
@@ -86,6 +92,13 @@
         var clearButton = document.getElementById("clear-track")
         if (clearButton) {
             clearButton.addEventListener("click", clearTrackMarkers)
+        }
+    }
+
+    function setupFollowButton() {
+        var followButton = document.getElementById("follow-button")
+        if (followButton) {
+            followButton.addEventListener("click", followAircraft)
         }
     }
 
@@ -155,12 +168,21 @@
             case "map":
                 {
                     const buttonContainer = document.createElement("div")
-                    buttonContainer.classList.add("data", "vertical-margin")
+                    buttonContainer.classList.add(
+                        "data",
+                        "vertical-margin",
+                        "flex-column",
+                    )
 
                     const clearTrack = document.createElement("button")
                     clearTrack.id = "clear-track"
                     clearTrack.textContent = "Clear track"
                     buttonContainer.appendChild(clearTrack)
+
+                    const follow = document.createElement("button")
+                    follow.id = "follow-button"
+                    follow.textContent = "Follow aircraft"
+                    buttonContainer.appendChild(follow)
 
                     panel.appendChild(buttonContainer)
 
@@ -225,6 +247,19 @@
         pathOnMap.setLatLngs([L.latLng(latitude, longitude)])
     }
 
+    function followAircraft() {
+        isDraggingMap = false
+
+        if (
+            !map ||
+            latitude === undefined ||
+            longitude === undefined ||
+            bearing === undefined
+        ) {
+            return
+        }
+    }
+
     function handleData(data) {
         _.forOwn(data, function (value, key) {
             if (
@@ -258,7 +293,9 @@
         }
 
         var position = L.latLng(latitude, longitude)
-        map.panTo(position)
+        if (!isDraggingMap) {
+            map.panTo(position)
+        }
 
         if (marker) {
             marker.setLatLng(position)
