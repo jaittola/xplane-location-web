@@ -1,5 +1,5 @@
 ;(function () {
-    document.addEventListener("DOMContentLoaded", function (event) {
+    document.addEventListener("DOMContentLoaded", function () {
         setup()
     })
 
@@ -191,7 +191,7 @@
             var offsetY = event.clientY - rect.top
 
             panel.parentElement.addEventListener("mousemove", moveEventListener)
-            panel.addEventListener("mouseup", upEventListener)
+            window.addEventListener("mouseup", upEventListener)
 
             function moveEventListener(event) {
                 var nextX = event.clientX - offsetX
@@ -202,12 +202,12 @@
                 event.preventDefault()
             }
 
-            function upEventListener(event) {
+            function upEventListener() {
                 panel.parentElement.removeEventListener(
                     "mousemove",
                     moveEventListener,
                 )
-                panel.removeEventListener("mouseup", upEventListener)
+                window.removeEventListener("mouseup", upEventListener)
             }
         })
     }
