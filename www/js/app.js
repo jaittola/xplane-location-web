@@ -85,10 +85,12 @@
             ws.addEventListener("message", (message) => {
                 try {
                     const jsonm = JSON.parse(message.data)
+                    /*
                     console.log(
                         "Got data from socket",
                         JSON.stringify(jsonm, null, 2),
-                    )
+                        )
+                        */
                     handleData(jsonm)
                 } catch (error) {
                     console.error("Got bad data from socket, skipping", error)
@@ -104,7 +106,7 @@
             return
         }
 
-        map = L.map("map").setView(greenwich(), 13)
+        map = L.map("map").setView(defaultLocation(), 13)
         L.tileLayer("https://c.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution:
                 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
@@ -114,8 +116,25 @@
         })
     }
 
-    function greenwich() {
-        return [51.47, 0.0]
+    function defaultLocation() {
+        const greenwich = [51.47, 0.0]
+
+        try {
+            const stored = Cookies.get("previousLocation")
+            if (stored) {
+                const storedObj = JSON.parse(stored)
+                if (
+                    storedObj.lat !== undefined &&
+                    storedObj.lon !== undefined
+                ) {
+                    return [storedObj.lat, storedObj.lon]
+                }
+            }
+        } catch (e) {
+            console.log("Getting previous location cookie failed", e)
+        }
+
+        return greenwich
     }
 
     function setupClearButton() {
@@ -299,7 +318,7 @@
             ) {
                 const staticHandler = staticHandlers[key]
                 if (staticHandler) {
-                    console.log(`Calling handler for ${key} = ${value}`)
+                    // console.log(`Calling handler for ${key} = ${value}`)
                     currentDataValues[key] = value
                     staticHandler(key, value)
                 }
@@ -311,6 +330,7 @@
             }
         })
         updatePositionMarker()
+        savePosition()
     }
 
     function updatePositionMarker() {
@@ -352,6 +372,17 @@
             pathOnMap.addLatLng(position)
             previousPathPosition = position
         }
+    }
+
+    function savePosition() {
+        if (latitude === undefined || longitude === undefined) {
+            return
+        }
+
+        Cookies.set(
+            "previousLocation",
+            JSON.stringify({ lat: latitude, lon: longitude }),
+        )
     }
 
     function setupControls() {
