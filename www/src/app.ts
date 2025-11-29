@@ -1,20 +1,45 @@
+import Cookies from "js-cookie"
+import _ from "lodash"
+import * as L from "leaflet"
+import "leaflet-rotatedmarker"
+
+type Variant = "map" | "controls"
+
+type ControlsButtonDefinition = {
+    incomingDataKey: string
+    outgoingToggleCommand: string
+    buttonText: string
+    buttonId?: string
+}
+
+type ControlsDefinition = {
+    rowId: string
+    buttons: ControlsButtonDefinition[]
+}[]
+
+type ReceivedDataSetter = (key: string, value: string | number) => void
+
+type ToggleButtonHandler = {
+    dataKey: string
+    updateValue: (value: string | number) => void
+}
 ;(function () {
     document.addEventListener("DOMContentLoaded", function () {
         setup()
     })
 
-    var socket
-    var map
-    var marker
-    var pathOnMap
-    var previousPathPosition
-    var latitude
-    var longitude
-    var bearing
+    let socket: WebSocket | undefined
+    var map: L.Map | undefined
+    var marker: L.Marker<L.Icon<L.DivIconOptions>> | undefined
+    var pathOnMap: L.Polyline | undefined
+    var previousPathPosition: L.LatLng | undefined
+    var latitude: number | undefined
+    var longitude: number | undefined
+    var bearing: number
 
     var isDraggingMap = false
 
-    const currentDataValues = {}
+    const currentDataValues: Record<string, string | number> = {}
 
     const commands = {
         toggleGear: "sim/flight_controls/landing_gear_toggle",
@@ -116,8 +141,8 @@
         })
     }
 
-    function defaultLocation() {
-        const greenwich = [51.47, 0.0]
+    function defaultLocation(): L.LatLngTuple {
+        const greenwich: L.LatLngTuple = [51.47, 0.0]
 
         try {
             const stored = Cookies.get("previousLocation")
@@ -151,7 +176,7 @@
         }
     }
 
-    function setupDataPanel(variant) {
+    function setupDataPanel(variant: Variant) {
         var main = document.getElementsByClassName("main")[0]
 
         if (!main) {
@@ -166,7 +191,7 @@
         setupDataPanelMoveHandler(panel)
     }
 
-    function createDataPanel(variant) {
+    function createDataPanel(variant: Variant) {
         const panel = document.createElement("div")
         panel.className = "data-panel"
 
@@ -256,26 +281,29 @@
         return panel
     }
 
-    function setupDataPanelMoveHandler(panel) {
+    function setupDataPanelMoveHandler(panel: HTMLDivElement) {
         panel.addEventListener("mousedown", function (event) {
             var rect = panel.getBoundingClientRect()
             var offsetX = event.clientX - rect.left
             var offsetY = event.clientY - rect.top
 
-            panel.parentElement.addEventListener("mousemove", moveEventListener)
+            panel.parentElement?.addEventListener(
+                "mousemove",
+                moveEventListener,
+            )
             window.addEventListener("mouseup", upEventListener)
 
-            function moveEventListener(event) {
+            function moveEventListener(event: MouseEvent) {
                 var nextX = event.clientX - offsetX
                 var nextY = event.clientY - offsetY
                 panel.style.left = nextX + "px"
                 panel.style.top = nextY + "px"
-                panel.style.right = undefined
+                panel.style.right = ""
                 event.preventDefault()
             }
 
             function upEventListener() {
-                panel.parentElement.removeEventListener(
+                panel.parentElement?.removeEventListener(
                     "mousemove",
                     moveEventListener,
                 )
@@ -310,7 +338,7 @@
         }
     }
 
-    function handleData(data) {
+    function handleData(data: unknown) {
         _.forOwn(data, function (value, key) {
             if (
                 !currentDataValues.hasOwnProperty(key) ||
@@ -369,7 +397,7 @@
             previousPathPosition &&
             previousPathPosition.distanceTo(position) > 200
         ) {
-            pathOnMap.addLatLng(position)
+            pathOnMap?.addLatLng(position)
             previousPathPosition = position
         }
     }
@@ -392,10 +420,10 @@
         }
 
         document
-            .getElementById("gear-handle")
-            .addEventListener("click", () => sendCommand(commands.toggleGear))
+            ?.getElementById("gear-handle")
+            ?.addEventListener("click", () => sendCommand(commands.toggleGear))
 
-        const toggleButtons = [
+        const toggleButtons: ControlsDefinition = [
             {
                 rowId: "controls-row-0",
                 buttons: [
@@ -570,7 +598,7 @@
         )
     }
 
-    var staticHandlers = {
+    var staticHandlers: Record<string, ReceivedDataSetter> = {
         ias: setNumericalData,
         tas: setNumericalData,
         "mag-heading": setMagneticHeading,
@@ -584,9 +612,12 @@
         "parking-brake": setParkingBrake,
     }
 
-    var handlers = []
+    let handlers: ToggleButtonHandler[] = []
 
-    function setupToggleButton(containerId, buttonDetails) {
+    function setupToggleButton(
+        containerId: string,
+        buttonDetails: ControlsButtonDefinition,
+    ) {
         const container = document.getElementById(containerId)
         if (!container) {
             console.log(`Requested container element ${containerId} not found`)
@@ -603,70 +634,65 @@
         )
         handlers.push({
             dataKey: buttonDetails.incomingDataKey,
-            updateValue: (value) =>
-                setToggleButtonForElementId(
-                    buttonId,
-                    buttonDetails.isButtonPressed === undefined
-                        ? value
-                        : buttonDetails.isButtonPressed(value),
-                ),
+            updateValue: (value: string | number) =>
+                setToggleButtonForElementId(buttonId, value),
         })
         container.append(wrapIntoFrame(element))
     }
 
-    function wrapIntoFrame(element) {
+    function wrapIntoFrame(element: HTMLElement) {
         const frame = document.createElement("div")
         frame.classList.add("control-container")
         frame.append(element)
         return frame
     }
 
-    function setNumericalData(key, value) {
+    function setNumericalData(key: string, value: string | number) {
         var property = "data-" + key
         var element = document.getElementById(property)
         if (element) {
             var resultValue = " - "
             if (_.isNumber(value)) {
-                resultValue = _.round(value, 1)
+                resultValue = _.round(value, 1).toString()
             }
             element.textContent = resultValue
         }
     }
 
-    function setLatitude(key, value) {
+    function setLatitude(key: string, value: string | number) {
         if (_.isNumber(value)) {
             latitude = value
         }
         setNumericalData(key, value)
     }
 
-    function setLongitude(key, value) {
+    function setLongitude(key: string, value: string | number) {
         if (_.isNumber(value)) {
             longitude = value
         }
         setNumericalData(key, value)
     }
 
-    function setMagneticHeading(key, value) {
+    function setMagneticHeading(key: string, value: string | number) {
         if (_.isNumber(value)) {
             bearing = value
         }
         setNumericalData(key, value)
     }
 
-    function setParkingBrake(key, value) {
+    function setParkingBrake(key: string, value: string | number | boolean) {
         const textValue = value == true ? "Engaged" : "Released"
         setText(key, textValue)
     }
 
-    function setText(key, value) {
+    function setText(key: string, value: string | number) {
         const element = document.getElementById("data-" + key)
         if (element) {
-            element.textContent = value
+            element.textContent = value.toString()
         }
     }
 
-    function setGear(key, value) {
+    function setGear(key: string, value: string | number) {
         setText(key, value)
         // TODO, the annunciator should look at gear deployment values.
         const element = document.getElementById(
@@ -675,46 +701,55 @@
         addOrRemoveClass(element, value == "Down", "active-green")
     }
 
-    function setHasRetractingGear(_key, value) {
+    function setHasRetractingGear(_key: string, value: string | number) {
         const element = document.getElementById("gear-control-container")
         if (element) {
             element.style.display = value ? "flex" : "none"
         }
     }
 
-    function setIsGearUnsafe(key, value) {
+    function setIsGearUnsafe(key: string, value: string | number) {
         const element = document.getElementById(
             "gear-control-annunciator-in-transit",
         )
-        addOrRemoveClass(element, value, "active-red")
+        addOrRemoveClass(element, !!value, "active-red")
     }
 
-    function setIsGearHandleDown(key, value) {
+    function setIsGearHandleDown(key: string, value: string | number) {
         setToggleButtonForElementId("gear-handle", value)
     }
 
-    function setToggleButtonForElementId(elementId, value) {
+    function setToggleButtonForElementId(
+        elementId: string,
+        value: string | number,
+    ) {
         const element = document.getElementById(elementId)
-        addOrRemoveClass(element, value, "control-toggle-button-down")
+        addOrRemoveClass(element, !!value, "control-toggle-button-down")
     }
 
-    function sendCommand(command) {
-        socket?.send(JSON.stringify({ command: command }))
+    function sendCommand(command: string) {
+        socket?.send(JSON.stringify({ command }))
     }
 
-    function toggleValue(key) {
+    function toggleValue(key: string) {
         if (!currentDataValues.hasOwnProperty(key)) {
             return
         }
-        socket?.send({
-            setDatarefValue: {
-                name: key,
-                floatValue: currentDataValues[key] === true ? 0 : 1,
-            },
-        })
+        socket?.send(
+            JSON.stringify({
+                setDatarefValue: {
+                    name: key,
+                    floatValue: !currentDataValues[key],
+                },
+            }),
+        )
     }
 
-    function addOrRemoveClass(element, shouldHaveClass, className) {
+    function addOrRemoveClass(
+        element: HTMLElement | null,
+        shouldHaveClass: boolean,
+        className: string,
+    ) {
         if (!element) {
             return
         }

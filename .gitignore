@@ -1,3 +1,4 @@
 node_modules/
 env-vars
 npm-debug.log
+www/dist/
