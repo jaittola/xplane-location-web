@@ -22,7 +22,7 @@ personal use.
 * If you are running on Windows, go to `www/components` and
   replace the symbolic links with copies of respective files from
   `../../node_modules/`. Setting up these files should be scripted.
-* To start the server, run `npm start`
+* Start the server using `npm run run-rust-server`
 * Point your browser to http://localhost:3001 (or to the IP address in
   which your are running the server).
 
