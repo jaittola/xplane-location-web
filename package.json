@@ -4,13 +4,13 @@
   "description": "",
   "main": "server.js",
   "dependencies": {
-    "detect-rpi": "^1.4.0",
+    "detect-rpi": "^1.5.0",
     "epoll": "^4.0.2",
-    "express": "^4.18.2",
+    "express": "^4.21.2",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
-    "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
