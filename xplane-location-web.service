@@ -1,11 +1,12 @@
 [Unit]
 Description=Web UI and hardware controls for XPlane
-After=network.target
+Requires=network.target
 
 [Service]
 Type=exec
 User=jaittola
 WorkingDirectory=/home/jaittola/xplane-location-web/rust-server
+ExecStartPre=/bin/sleep 10
 ExecStart=/home/jaittola/xplane-location-web/rust-server/xplw -g hw-inputs.json -w ../www
 Restart=on-failure
 
