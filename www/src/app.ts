@@ -8,6 +8,7 @@ import {
     ControlsButtonDefinition,
     toggleButtons,
 } from "./ControlsDefinition"
+import { startWebsocket, sendSocket } from "./websocket"
 
 type Variant = "map" | "controls"
 
@@ -22,7 +23,6 @@ type ToggleButtonHandler = {
         setup()
     })
 
-    let socket: WebSocket | undefined
     let map: L.Map | undefined
     let marker: L.Marker<L.Icon<L.DivIconOptions>> | undefined
     let pathOnMap: L.Polyline | undefined
@@ -39,54 +39,12 @@ type ToggleButtonHandler = {
         const mapElement = document.getElementById("map")
         const variant = mapElement ? "map" : "controls"
 
-        setupSocket()
+        startWebsocket(handleData)
         if (mapElement) setupMap()
         setupDataPanel(variant)
         setupControls()
         setupClearButton()
         setupFollowButton()
-    }
-
-    function setupSocket() {
-        function connect() {
-            const ws = new WebSocket(`ws://${location.host}/websocket`)
-
-            ws.addEventListener("open", () => {
-                console.log("Websocket opened")
-                socket = ws
-            })
-
-            ws.addEventListener("close", () => {
-                console.log("Websocket closed")
-                socket = undefined
-
-                setTimeout(() => {
-                    connect()
-                }, 2000)
-            })
-
-            ws.addEventListener("error", () => {
-                console.log("Websocket failed")
-                // A close event should follow.
-            })
-
-            ws.addEventListener("message", (message) => {
-                try {
-                    const jsonm = JSON.parse(message.data)
-                    /*
-                    console.log(
-                        "Got data from socket",
-                        JSON.stringify(jsonm, null, 2),
-                        )
-                        */
-                    handleData(jsonm)
-                } catch (error) {
-                    console.error("Got bad data from socket, skipping", error)
-                }
-            })
-        }
-
-        connect()
     }
 
     function setupMap() {
@@ -522,7 +480,7 @@ type ToggleButtonHandler = {
     }
 
     function sendCommand(command: string) {
-        socket?.send(JSON.stringify({ command }))
+        sendSocket({ command })
     }
 
     function addOrRemoveClass(
