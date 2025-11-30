@@ -9,6 +9,7 @@ import {
     toggleButtons,
 } from "./controls-definition"
 import { startWebsocket, sendSocket } from "./websocket"
+import { registerDataListener } from "./data-listeners"
 
 type Variant = "map" | "controls"
 
@@ -18,6 +19,7 @@ type ToggleButtonHandler = {
     dataKey: string
     updateValue: (value: string | number) => void
 }
+
 ;(function () {
     document.addEventListener("DOMContentLoaded", function () {
         setup()
@@ -39,7 +41,8 @@ type ToggleButtonHandler = {
         const mapElement = document.getElementById("map")
         const variant = mapElement ? "map" : "controls"
 
-        startWebsocket(handleData)
+        registerDataListener(handleData)
+        startWebsocket()
         if (mapElement) setupMap()
         setupDataPanel(variant)
         setupControls()

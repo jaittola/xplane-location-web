@@ -1,7 +1,9 @@
+import { broadcastData } from "./data-listeners"
+
 let socket: WebSocket | null = null
 let reconnectTimer: number | null = null
 
-export function startWebsocket(onMessage: (data: unknown) => void) {
+export function startWebsocket() {
     function connect() {
         const ws = new WebSocket(`ws://${location.host}/websocket`)
 
@@ -27,7 +29,7 @@ export function startWebsocket(onMessage: (data: unknown) => void) {
         ws.addEventListener("message", (message: MessageEvent) => {
             try {
                 const jsonm = JSON.parse(message.data as string)
-                onMessage(jsonm)
+                broadcastData(jsonm)
             } catch (error) {
                 console.error("Got bad data from socket, skipping", error)
             }
