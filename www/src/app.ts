@@ -7,7 +7,7 @@ import {
     commands,
     ControlsButtonDefinition,
     toggleButtons,
-} from "./ControlsDefinition"
+} from "./controls-definition"
 import { startWebsocket, sendSocket } from "./websocket"
 
 type Variant = "map" | "controls"
