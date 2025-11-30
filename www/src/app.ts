@@ -23,21 +23,21 @@ type ToggleButtonHandler = {
     })
 
     let socket: WebSocket | undefined
-    var map: L.Map | undefined
-    var marker: L.Marker<L.Icon<L.DivIconOptions>> | undefined
-    var pathOnMap: L.Polyline | undefined
-    var previousPathPosition: L.LatLng | undefined
-    var latitude: number | undefined
-    var longitude: number | undefined
-    var bearing: number
+    let map: L.Map | undefined
+    let marker: L.Marker<L.Icon<L.DivIconOptions>> | undefined
+    let pathOnMap: L.Polyline | undefined
+    let previousPathPosition: L.LatLng | undefined
+    let latitude: number | undefined
+    let longitude: number | undefined
+    let bearing: number
 
-    var isDraggingMap = false
+    let isDraggingMap = false
 
     const currentDataValues: Record<string, string | number> = {}
 
     function setup() {
         const mapElement = document.getElementById("map")
-        const variant = !!mapElement ? "map" : "controls"
+        const variant = mapElement ? "map" : "controls"
 
         setupSocket()
         if (mapElement) setupMap()
@@ -126,28 +126,28 @@ type ToggleButtonHandler = {
     }
 
     function setupClearButton() {
-        var clearButton = document.getElementById("clear-track")
+        const clearButton = document.getElementById("clear-track")
         if (clearButton) {
             clearButton.addEventListener("click", clearTrackMarkers)
         }
     }
 
     function setupFollowButton() {
-        var followButton = document.getElementById("follow-button")
+        const followButton = document.getElementById("follow-button")
         if (followButton) {
             followButton.addEventListener("click", followAircraft)
         }
     }
 
     function setupDataPanel(variant: Variant) {
-        var main = document.getElementsByClassName("main")[0]
+        const main = document.getElementsByClassName("main")[0]
 
         if (!main) {
             alert("Cannot set up, main is missing")
             return
         }
 
-        var panel = createDataPanel(variant)
+        const panel = createDataPanel(variant)
 
         main.appendChild(panel)
 
@@ -246,9 +246,9 @@ type ToggleButtonHandler = {
 
     function setupDataPanelMoveHandler(panel: HTMLDivElement) {
         panel.addEventListener("mousedown", function (event) {
-            var rect = panel.getBoundingClientRect()
-            var offsetX = event.clientX - rect.left
-            var offsetY = event.clientY - rect.top
+            const rect = panel.getBoundingClientRect()
+            const offsetX = event.clientX - rect.left
+            const offsetY = event.clientY - rect.top
 
             panel.parentElement?.addEventListener(
                 "mousemove",
@@ -257,8 +257,8 @@ type ToggleButtonHandler = {
             window.addEventListener("mouseup", upEventListener)
 
             function moveEventListener(event: MouseEvent) {
-                var nextX = event.clientX - offsetX
-                var nextY = event.clientY - offsetY
+                const nextX = event.clientX - offsetX
+                const nextY = event.clientY - offsetY
                 panel.style.left = nextX + "px"
                 panel.style.top = nextY + "px"
                 panel.style.right = ""
@@ -304,6 +304,7 @@ type ToggleButtonHandler = {
     function handleData(data: unknown) {
         _.forOwn(data, function (value, key) {
             if (
+                // eslint-disable-next-line no-prototype-builtins
                 !currentDataValues.hasOwnProperty(key) ||
                 currentDataValues[key] !== value
             ) {
@@ -334,7 +335,7 @@ type ToggleButtonHandler = {
             return
         }
 
-        var position = L.latLng(latitude, longitude)
+        const position = L.latLng(latitude, longitude)
         if (!isDraggingMap) {
             map.panTo(position)
         }
@@ -391,7 +392,7 @@ type ToggleButtonHandler = {
         )
     }
 
-    var staticHandlers: Record<string, ReceivedDataSetter> = {
+    const staticHandlers: Record<string, ReceivedDataSetter> = {
         ias: setNumericalData,
         tas: setNumericalData,
         "mag-heading": setMagneticHeading,
@@ -405,7 +406,7 @@ type ToggleButtonHandler = {
         "parking-brake": setParkingBrake,
     }
 
-    let handlers: ToggleButtonHandler[] = []
+    const handlers: ToggleButtonHandler[] = []
 
     function setupToggleButton(
         containerId: string,
@@ -441,10 +442,10 @@ type ToggleButtonHandler = {
     }
 
     function setNumericalData(key: string, value: string | number) {
-        var property = "data-" + key
-        var element = document.getElementById(property)
+        const property = "data-" + key
+        const element = document.getElementById(property)
         if (element) {
-            var resultValue = " - "
+            let resultValue = " - "
             if (_.isNumber(value)) {
                 resultValue = _.round(value, 1).toString()
             }
@@ -522,20 +523,6 @@ type ToggleButtonHandler = {
 
     function sendCommand(command: string) {
         socket?.send(JSON.stringify({ command }))
-    }
-
-    function toggleValue(key: string) {
-        if (!currentDataValues.hasOwnProperty(key)) {
-            return
-        }
-        socket?.send(
-            JSON.stringify({
-                setDatarefValue: {
-                    name: key,
-                    floatValue: !currentDataValues[key],
-                },
-            }),
-        )
     }
 
     function addOrRemoveClass(

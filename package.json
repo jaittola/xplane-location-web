@@ -1,38 +1,44 @@
 {
-  "name": "X-PlaneLocationMap",
-  "version": "0.0.1",
-  "description": "",
-  "main": "server.js",
-  "dependencies": {
-    "detect-rpi": "^1.5.0",
-    "epoll": "^4.0.2",
-    "express": "^4.21.2",
-    "js-cookie": "^3.0.5",
-    "leaflet": "^1.9.4",
-    "leaflet-rotatedmarker": "^0.2.0",
-    "lodash": "^4.17.21",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
-  },
-  "scripts": {
-    "build-web-prod": "webpack --mode production",
-    "watch-web": "webpack --mode development --watch",
-    "build-web": "webpack --mode development",
-    "run-rust-server": "cd rust-server && cargo run",
-    "test-rust-server": "cd rust-server && cargo test",
-    "build-rust-server": "cd rust-server && cargo build --release"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/js-cookie": "^3.0.6",
-    "@types/leaflet": "^1.9.21",
-    "@types/leaflet-rotatedmarker": "^0.2.6",
-    "@types/lodash": "^4.17.21",
-    "@types/webpack": "^5.28.5",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.9.3",
-    "webpack": "^5.92.1",
-    "webpack-cli": "^5.1.4"
-  }
+    "name": "X-PlaneLocationMap",
+    "version": "0.0.1",
+    "description": "",
+    "main": "server.js",
+    "dependencies": {
+        "detect-rpi": "^1.5.0",
+        "epoll": "^4.0.2",
+        "express": "^4.21.2",
+        "js-cookie": "^3.0.5",
+        "leaflet": "^1.9.4",
+        "leaflet-rotatedmarker": "^0.2.0",
+        "lodash": "^4.17.21",
+        "socket.io": "^4.8.1",
+        "socket.io-client": "^4.8.1"
+    },
+    "scripts": {
+        "build-web-prod": "webpack --mode production",
+        "watch-web": "webpack --mode development --watch",
+        "build-web": "webpack --mode development",
+        "lint": "eslint www/src",
+        "lint:fix": "eslint www/src/ --fix",
+        "prettier": "prettier -w www/src/",
+        "run-rust-server": "cd rust-server && cargo run",
+        "test-rust-server": "cd rust-server && cargo test",
+        "build-rust-server": "cd rust-server && cargo build --release"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@eslint/js": "^9.39.1",
+        "@types/js-cookie": "^3.0.6",
+        "@types/leaflet": "^1.9.21",
+        "@types/leaflet-rotatedmarker": "^0.2.6",
+        "@types/lodash": "^4.17.21",
+        "@types/webpack": "^5.28.5",
+        "eslint": "^9.39.1",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.48.0",
+        "webpack": "^5.92.1",
+        "webpack-cli": "^5.1.4"
+    }
 }
