@@ -11,14 +11,18 @@ import {
 import { startWebsocket, sendSocket } from "./websocket"
 import { registerDataListener } from "./data-listeners"
 
-type Variant = "map" | "controls"
-
 type ReceivedDataSetter = (key: string, value: string | number) => void
 
 type ToggleButtonHandler = {
     dataKey: string
     updateValue: (value: string | number) => void
 }
+
+/* TODO, remove after proper componentization */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let clearTrack: (() => void) | undefined
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let followAircraft: (() => void) | undefined
 
 ;(function () {
     document.addEventListener("DOMContentLoaded", function () {
@@ -39,12 +43,10 @@ type ToggleButtonHandler = {
 
     function setup() {
         const mapElement = document.getElementById("map")
-        const variant = mapElement ? "map" : "controls"
 
         registerDataListener(handleData)
         startWebsocket()
         if (mapElement) setupMap()
-        setupDataPanel(variant)
         setupControls()
         setupClearButton()
         setupFollowButton()
@@ -98,142 +100,6 @@ type ToggleButtonHandler = {
         if (followButton) {
             followButton.addEventListener("click", followAircraft)
         }
-    }
-
-    function setupDataPanel(variant: Variant) {
-        const main = document.getElementsByClassName("main")[0]
-
-        if (!main) {
-            alert("Cannot set up, main is missing")
-            return
-        }
-
-        const panel = createDataPanel(variant)
-
-        main.appendChild(panel)
-
-        setupDataPanelMoveHandler(panel)
-    }
-
-    function createDataPanel(variant: Variant) {
-        const panel = document.createElement("div")
-        panel.className = "data-panel"
-
-        const panelData = [
-            { title: "Velocity (IAS)", item: "ias", unit: "kn" },
-            { title: "Velocity (TAS)", item: "tas", unit: "kn" },
-            { title: "Heading (M)", item: "mag-heading", unit: "°" },
-            { title: "Altitude", item: "altitude", unit: "ft" },
-            { title: "Latitude", item: "lat", unit: "°" },
-            { title: "Longitude", item: "lon", unit: "°" },
-            { title: "Gear", item: "gear" },
-            { title: "Parking brake", item: "parking-brake" },
-        ]
-
-        panelData
-            .map(({ title, item, unit }) => {
-                const element = document.createElement("div")
-                element.className = "data"
-
-                const titleElement = document.createElement("div")
-                titleElement.className = "data-item"
-                titleElement.textContent = title
-                element.appendChild(titleElement)
-
-                const valueElement = document.createElement("span")
-                valueElement.className = "data-value"
-                valueElement.id = `data-${item}`
-                valueElement.textContent = " - "
-                element.appendChild(valueElement)
-
-                if (unit !== undefined) {
-                    const unitElement = document.createElement("span")
-                    unitElement.className = "data-unit"
-                    unitElement.textContent = ` ${unit}`
-                    element.appendChild(unitElement)
-                }
-
-                return element
-            })
-            .forEach((element) => {
-                panel.appendChild(element)
-            })
-
-        const spacer = document.createElement("div")
-        spacer.className = "spacer"
-        panel.appendChild(spacer)
-
-        switch (variant) {
-            case "map":
-                {
-                    const buttonContainer = document.createElement("div")
-                    buttonContainer.classList.add(
-                        "data",
-                        "vertical-margin",
-                        "flex-column",
-                    )
-
-                    const clearTrack = document.createElement("button")
-                    clearTrack.id = "clear-track"
-                    clearTrack.textContent = "Clear track"
-                    buttonContainer.appendChild(clearTrack)
-
-                    const follow = document.createElement("button")
-                    follow.id = "follow-button"
-                    follow.textContent = "Follow aircraft"
-                    buttonContainer.appendChild(follow)
-
-                    panel.appendChild(buttonContainer)
-
-                    const linkToControls = document.createElement("a")
-                    linkToControls.setAttribute("href", "/")
-                    linkToControls.textContent = "Show controls"
-                    panel.appendChild(linkToControls)
-                }
-                break
-
-            case "controls":
-                {
-                    const linkToMap = document.createElement("a")
-                    linkToMap.setAttribute("href", "map.html")
-                    linkToMap.textContent = "Show map"
-                    panel.appendChild(linkToMap)
-                }
-                break
-        }
-
-        return panel
-    }
-
-    function setupDataPanelMoveHandler(panel: HTMLDivElement) {
-        panel.addEventListener("mousedown", function (event) {
-            const rect = panel.getBoundingClientRect()
-            const offsetX = event.clientX - rect.left
-            const offsetY = event.clientY - rect.top
-
-            panel.parentElement?.addEventListener(
-                "mousemove",
-                moveEventListener,
-            )
-            window.addEventListener("mouseup", upEventListener)
-
-            function moveEventListener(event: MouseEvent) {
-                const nextX = event.clientX - offsetX
-                const nextY = event.clientY - offsetY
-                panel.style.left = nextX + "px"
-                panel.style.top = nextY + "px"
-                panel.style.right = ""
-                event.preventDefault()
-            }
-
-            function upEventListener() {
-                panel.parentElement?.removeEventListener(
-                    "mousemove",
-                    moveEventListener,
-                )
-                window.removeEventListener("mouseup", upEventListener)
-            }
-        })
     }
 
     function clearTrackMarkers() {
