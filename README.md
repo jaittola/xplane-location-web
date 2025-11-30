@@ -20,6 +20,7 @@ personal use.
 * Install [npm](https://www.npmjs.com/) for your platform.
 * To download the dependencies, run `npm install`
 * Start the server using `npm run run-rust-server`
+  * If you need more debug output from rust-server, set the loglevel: `npm run run-rust-server -- -- -l debug`
 * Point your browser to http://localhost:3001 (or to the IP address in
   which your are running the server).
 
