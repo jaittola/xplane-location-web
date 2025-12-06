@@ -2,8 +2,15 @@ import { divIcon, LatLngTuple } from "leaflet"
 import "leaflet-rotatedmarker"
 import "leaflet/dist/leaflet.css"
 import { useEffect, useRef, useState } from "react"
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet"
-import { FlightDataValues } from "../hooks/useFlightData"
+import {
+    MapContainer,
+    Marker,
+    Polyline,
+    TileLayer,
+    useMapEvents,
+} from "react-leaflet"
+import { FlightDataValues, position } from "../hooks/useFlightData"
+import { FlightTracking } from "../hooks/use-flight-track"
 import { defaultLocation, saveLocation } from "../location-cookies"
 import { ViewType } from "../types"
 import { DataPanel } from "./data-panel"
@@ -11,22 +18,17 @@ import { DataPanel } from "./data-panel"
 export function MapView({
     flightData,
     showOtherView,
+    flightTrack: { track, clearTrack },
 }: {
     flightData: FlightDataValues
     showOtherView: (viewType: ViewType) => void
+    flightTrack: FlightTracking
 }) {
-    const lat = flightData["lat"]
-    const lon = flightData["lon"]
-    const markerPosition: LatLngTuple | undefined =
-        typeof lat === "number" && typeof lon === "number"
-            ? [lat, lon]
-            : undefined
+    const markerPosition: LatLngTuple | undefined = position(flightData)
     const magHeading = flightData["mag-heading"]
     const bearing = typeof magHeading === "number" ? magHeading : 0
 
     const [isDraggingMap, setIsDraggingMap] = useState(false)
-
-    // TODO, implement track & track clearing button
 
     // The typings seem to be a bit broken, hence the any.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,6 +69,7 @@ export function MapView({
                         rotationOrigin="center"
                     />
                 )}
+                <Polyline positions={track} color="purple" />
             </MapContainer>
             <DataPanel
                 viewType="map"
@@ -74,6 +77,7 @@ export function MapView({
                 followAircraft={() => {
                     setIsDraggingMap(false)
                 }}
+                clearTrack={clearTrack}
                 showOtherView={showOtherView}
             />
         </>
