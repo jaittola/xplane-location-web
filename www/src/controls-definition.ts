@@ -1,15 +1,3 @@
-export type ControlsButtonDefinition = {
-    incomingDataKey: string
-    outgoingToggleCommand: string
-    buttonText: string
-    buttonId?: string
-}
-
-export type ControlsDefinition = {
-    rowId: string
-    buttons: ControlsButtonDefinition[]
-}[]
-
 export const commands = {
     toggleGear: "sim/flight_controls/landing_gear_toggle",
     toggleParkingBrake: "sim/flight_controls/brakes_toggle_max",
@@ -41,50 +29,79 @@ export const commands = {
     headingSync: "sim/autopilot/heading_sync",
 }
 
+export type CommandName = keyof typeof commands
+export type CommandValue = (typeof commands)[CommandName]
+
+export type ButtonDefinition = {
+    type: "button"
+    incomingDataKey: string
+    outgoingToggleCommand: CommandValue
+    text: string
+}
+
+export type GearControlDefinition = {
+    type: "gear"
+}
+
+export type ControlDefinition = ButtonDefinition | GearControlDefinition
+
+export type ControlsDefinition = {
+    rowId?: string
+    controls: ControlDefinition[]
+}[]
+
 export const toggleButtons: ControlsDefinition = [
     {
-        rowId: "controls-row-0",
-        buttons: [
+        controls: [
             {
+                type: "button",
                 incomingDataKey: "parking-brake",
                 outgoingToggleCommand: commands.toggleParkingBrake,
-                buttonText: "Parking Brake",
+                text: "Parking Brake",
+            },
+            {
+                type: "gear",
             },
         ],
     },
     {
-        rowId: "controls-row-1",
-        buttons: [
+        controls: [
             {
+                type: "button",
                 incomingDataKey: "navigation-lights",
                 outgoingToggleCommand: commands.toggleNavLights,
-                buttonText: "Nav Lights",
+                text: "Nav Lights",
             },
             {
+                type: "button",
                 incomingDataKey: "beacon",
                 outgoingToggleCommand: commands.toggleBeacon,
-                buttonText: "Beacon",
+                text: "Beacon",
             },
             {
+                type: "button",
                 incomingDataKey: "strobe-lights",
                 outgoingToggleCommand: commands.toggleStrobe,
-                buttonText: "Strobe",
+                text: "Strobe",
             },
             {
+                type: "button",
                 incomingDataKey: "taxi-lights",
                 outgoingToggleCommand: commands.toggleTaxiLights,
-                buttonText: "Taxi lights",
+                text: "Taxi lights",
             },
             {
+                type: "button",
                 incomingDataKey: "landing-lights-1",
                 outgoingToggleCommand: commands.toggleLanding1,
-                buttonText: "Ldg Light",
+                text: "Ldg Light",
             },
 
             {
+                type: "button",
                 incomingDataKey: "landing-lights-2",
                 outgoingToggleCommand: commands.toggleLanding2,
-                buttonText: "Ldg Light",
+                text: "Ldg Light",
             },
             /* Baron has two landing lights. Remove these for now.
                 Useful for large aircraft like the B738.
@@ -104,106 +121,122 @@ export const toggleButtons: ControlsDefinition = [
     },
     {
         rowId: "controls-row-2",
-        buttons: [
+        controls: [
             {
+                type: "button",
                 incomingDataKey: "pitot-heat-1",
                 outgoingToggleCommand: commands.togglePitot0,
-                buttonText: "Pitot Heat",
+                text: "Pitot Heat",
             },
             {
+                type: "button",
                 incomingDataKey: "pitot-heat-2",
                 outgoingToggleCommand: commands.togglePitot1,
-                buttonText: "Pitot Heat",
+                text: "Pitot Heat",
             },
             {
+                type: "button",
                 incomingDataKey: "stall-warn-heat",
                 outgoingToggleCommand: commands.toggleStallWarnHeat,
-                buttonText: "Stall Warn",
+                text: "Stall Warn",
             },
             {
+                type: "button",
                 incomingDataKey: "prop-heat",
                 outgoingToggleCommand: commands.togglePropHeat,
-                buttonText: "Prop Heat",
+                text: "Prop Heat",
             },
             {
+                type: "button",
                 incomingDataKey: "window-heat",
                 outgoingToggleCommand: commands.toggleWindowHeat,
-                buttonText: "Window Heat",
+                text: "Window Heat",
             },
         ],
     },
     {
-        rowId: "controls-row-3",
-        buttons: [
+        controls: [
             {
+                type: "button",
                 incomingDataKey: "autopilot-engaged",
                 outgoingToggleCommand: commands.servosOff,
-                buttonText: "AP eng",
+                text: "AP eng",
             },
             {
+                type: "button",
                 incomingDataKey: "flightdirector-engaged",
                 outgoingToggleCommand: commands.toggleFlightDirector,
-                buttonText: "Flight dir",
+                text: "Flight dir",
             },
             {
+                type: "button",
                 incomingDataKey: "autopilot-heading-mode",
                 outgoingToggleCommand: commands.setAutopilotHeadingMode,
-                buttonText: "AP HDG",
+                text: "AP HDG",
             },
             {
+                type: "button",
                 incomingDataKey: "autopilot-nav-mode",
                 outgoingToggleCommand: commands.setAutopilotNavMode,
-                buttonText: "AP NAV",
+                text: "AP NAV",
             },
             {
+                type: "button",
                 incomingDataKey: "autopilot-alt-mode",
                 outgoingToggleCommand: commands.setAutopilotAltMode,
-                buttonText: "AP ALT",
+                text: "AP ALT",
             },
             {
+                type: "button",
                 incomingDataKey: "autopilot-approach-mode",
                 outgoingToggleCommand: commands.setAutopilotApproachMode,
-                buttonText: "AP APP",
+                text: "AP APP",
             },
             {
+                type: "button",
                 incomingDataKey: "autopilot-back-course-mode",
                 outgoingToggleCommand: commands.setAutopilotBackCourseMode,
-                buttonText: "AP BC",
+                text: "AP BC",
             },
             {
+                type: "button",
                 incomingDataKey: "yaw-damper",
                 outgoingToggleCommand: commands.toggleYawDamper,
-                buttonText: "Yaw damper",
+                text: "Yaw damper",
             },
             {
+                type: "button",
                 incomingDataKey: "",
                 outgoingToggleCommand: commands.noseUp,
-                buttonText: "Nose Up",
+                text: "Nose Up",
             },
             {
+                type: "button",
                 incomingDataKey: "",
                 outgoingToggleCommand: commands.noseDown,
-                buttonText: "Nose Down",
+                text: "Nose Down",
             },
         ],
     },
     {
-        rowId: "controls-row-4",
-        buttons: [
+        controls: [
             {
+                type: "button",
                 incomingDataKey: "",
                 outgoingToggleCommand: commands.headingDown,
-                buttonText: "Heading -",
+                text: "Heading -",
             },
             {
+                type: "button",
                 incomingDataKey: "",
                 outgoingToggleCommand: commands.headingUp,
-                buttonText: "Heading +",
+                text: "Heading +",
             },
             {
+                type: "button",
                 incomingDataKey: "",
                 outgoingToggleCommand: commands.headingSync,
-                buttonText: "Heading sync",
+                text: "Heading sync",
             },
         ],
     },

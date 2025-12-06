@@ -20,7 +20,7 @@
         "build-web-prod": "webpack --mode production",
         "watch-web": "webpack --mode development --watch",
         "build-web": "webpack --mode development",
-        "lint": "eslint www/src",
+        "lint": "tsc && eslint www/src",
         "lint:fix": "eslint www/src/ --fix",
         "prettier": "prettier -w www/src/",
         "run-rust-server": "cd rust-server && cargo run",

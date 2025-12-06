@@ -3,27 +3,16 @@ import _ from "lodash"
 import * as L from "leaflet"
 import "leaflet-rotatedmarker"
 
-import {
-    commands,
-    ControlsButtonDefinition,
-    toggleButtons,
-} from "./controls-definition"
-import { startWebsocket, sendSocket } from "./websocket"
+import { startWebsocket } from "./websocket"
 import { registerDataListener } from "./data-listeners"
 
 type ReceivedDataSetter = (key: string, value: string | number) => void
-
-type ToggleButtonHandler = {
-    dataKey: string
-    updateValue: (value: string | number) => void
-}
 
 /* TODO, remove after proper componentization */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let clearTrack: (() => void) | undefined
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let followAircraft: (() => void) | undefined
-
 ;(function () {
     document.addEventListener("DOMContentLoaded", function () {
         setup()
@@ -47,7 +36,6 @@ let followAircraft: (() => void) | undefined
         registerDataListener(handleData)
         startWebsocket()
         if (mapElement) setupMap()
-        setupControls()
         setupClearButton()
         setupFollowButton()
     }
@@ -141,11 +129,6 @@ let followAircraft: (() => void) | undefined
                     currentDataValues[key] = value
                     staticHandler(key, value)
                 }
-                handlers.forEach(({ dataKey, updateValue }) => {
-                    if (dataKey === key) {
-                        updateValue(value)
-                    }
-                })
             }
         })
         updatePositionMarker()
@@ -200,22 +183,7 @@ let followAircraft: (() => void) | undefined
 
         Cookies.set(
             "previousLocation",
-            JSON.stringify({ lat: latitude, lon: longitude }),
-        )
-    }
-
-    function setupControls() {
-        const controlsRoot = document.getElementById("controls")
-        if (!controlsRoot) {
-            return
-        }
-
-        document
-            ?.getElementById("gear-handle")
-            ?.addEventListener("click", () => sendCommand(commands.toggleGear))
-
-        toggleButtons.forEach(({ rowId, buttons }) =>
-            buttons.forEach((button) => setupToggleButton(rowId, button)),
+            JSON.stringify({ lat: latitude, lon: longitude })
         )
     }
 
@@ -226,46 +194,6 @@ let followAircraft: (() => void) | undefined
         altitude: setNumericalData,
         lat: setLatitude,
         lon: setLongitude,
-        gear: setGear,
-        "has-retracting-gear": setHasRetractingGear,
-        "is-gear-unsafe": setIsGearUnsafe,
-        "is-gear-handle-down": setIsGearHandleDown,
-        "parking-brake": setParkingBrake,
-    }
-
-    const handlers: ToggleButtonHandler[] = []
-
-    function setupToggleButton(
-        containerId: string,
-        buttonDetails: ControlsButtonDefinition,
-    ) {
-        const container = document.getElementById(containerId)
-        if (!container) {
-            console.log(`Requested container element ${containerId} not found`)
-            return
-        }
-        const element = document.createElement("button")
-        const buttonId =
-            buttonDetails.buttonId || `${buttonDetails.incomingDataKey}-button`
-        element.id = buttonId
-        element.classList.add("control-toggle-button")
-        element.append(document.createTextNode(buttonDetails.buttonText))
-        element.addEventListener("click", () =>
-            sendCommand(buttonDetails.outgoingToggleCommand),
-        )
-        handlers.push({
-            dataKey: buttonDetails.incomingDataKey,
-            updateValue: (value: string | number) =>
-                setToggleButtonForElementId(buttonId, value),
-        })
-        container.append(wrapIntoFrame(element))
-    }
-
-    function wrapIntoFrame(element: HTMLElement) {
-        const frame = document.createElement("div")
-        frame.classList.add("control-container")
-        frame.append(element)
-        return frame
     }
 
     function setNumericalData(key: string, value: string | number) {
@@ -299,71 +227,5 @@ let followAircraft: (() => void) | undefined
             bearing = value
         }
         setNumericalData(key, value)
-    }
-
-    function setParkingBrake(key: string, value: string | number | boolean) {
-        const textValue = value == true ? "Engaged" : "Released"
-        setText(key, textValue)
-    }
-
-    function setText(key: string, value: string | number) {
-        const element = document.getElementById("data-" + key)
-        if (element) {
-            element.textContent = value.toString()
-        }
-    }
-
-    function setGear(key: string, value: string | number) {
-        setText(key, value)
-        // TODO, the annunciator should look at gear deployment values.
-        const element = document.getElementById(
-            "gear-control-annunciator-down-and-locked",
-        )
-        addOrRemoveClass(element, value == "Down", "active-green")
-    }
-
-    function setHasRetractingGear(_key: string, value: string | number) {
-        const element = document.getElementById("gear-control-container")
-        if (element) {
-            element.style.display = value ? "flex" : "none"
-        }
-    }
-
-    function setIsGearUnsafe(key: string, value: string | number) {
-        const element = document.getElementById(
-            "gear-control-annunciator-in-transit",
-        )
-        addOrRemoveClass(element, !!value, "active-red")
-    }
-
-    function setIsGearHandleDown(key: string, value: string | number) {
-        setToggleButtonForElementId("gear-handle", value)
-    }
-
-    function setToggleButtonForElementId(
-        elementId: string,
-        value: string | number,
-    ) {
-        const element = document.getElementById(elementId)
-        addOrRemoveClass(element, !!value, "control-toggle-button-down")
-    }
-
-    function sendCommand(command: string) {
-        sendSocket({ command })
-    }
-
-    function addOrRemoveClass(
-        element: HTMLElement | null,
-        shouldHaveClass: boolean,
-        className: string,
-    ) {
-        if (!element) {
-            return
-        }
-        if (shouldHaveClass) {
-            element.classList.add(className)
-        } else {
-            element.classList.remove(className)
-        }
     }
 })()

@@ -1,0 +1,48 @@
+import { ControlDefinition, toggleButtons } from "../controls-definition"
+import { FlightDataValues } from "../hooks/useFlightData"
+import { GearControl } from "./gear-control"
+import { ControlToggleButton } from "./control-toggle-button"
+
+export function ControlButtons({
+    flightData,
+}: {
+    flightData: FlightDataValues
+}) {
+    return (
+        <div className="controls">
+            {toggleButtons.map((row, rowIndex) => (
+                <div key={`controls-${rowIndex}`} className="controls-row">
+                    {row.controls.map((control, colIndex) => (
+                        <Control
+                            key={`control-${rowIndex}-${colIndex}`}
+                            control={control}
+                            flightData={flightData}
+                        />
+                    ))}
+                </div>
+            ))}
+        </div>
+    )
+}
+
+function Control({
+    control,
+    flightData,
+}: {
+    control: ControlDefinition
+    flightData: FlightDataValues
+}) {
+    switch (control.type) {
+        case "button":
+            return (
+                <ControlToggleButton
+                    incomingDataKey={control.incomingDataKey}
+                    outgoingToggleCommand={control.outgoingToggleCommand}
+                    buttonText={control.text}
+                    flightData={flightData}
+                />
+            )
+        case "gear":
+            return <GearControl flightData={flightData} />
+    }
+}
