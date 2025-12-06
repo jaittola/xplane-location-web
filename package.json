@@ -13,6 +13,7 @@
         "lodash": "^4.17.21",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
+        "react-leaflet": "^5.0.0",
         "socket.io": "^4.8.1",
         "socket.io-client": "^4.8.1"
     },
@@ -38,7 +39,9 @@
         "@types/react": "^19.2.7",
         "@types/react-dom": "^19.2.3",
         "@types/webpack": "^5.28.5",
+        "css-loader": "^7.1.2",
         "eslint": "^9.39.1",
+        "style-loader": "^4.0.0",
         "ts-loader": "^9.5.1",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.48.0",
