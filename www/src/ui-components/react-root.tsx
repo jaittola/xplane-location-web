@@ -1,12 +1,10 @@
-import React from "react"
+import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
-import { DataPanel } from "./data-panel"
-import { ControlButtons } from "./control-buttons"
 import { FlightDataValues, useFlightData } from "../hooks/useFlightData"
-
-const viewType = document.location.pathname.includes("map.html")
-    ? "map"
-    : "controls"
+import { ViewType } from "../types"
+import { ControlButtons } from "./control-buttons"
+import { DataPanel } from "./data-panel"
+import { MapView } from "./map-view"
 
 const rootElement = document.getElementById("react-root")
 const root = rootElement ? createRoot(rootElement!) : null
@@ -17,33 +15,37 @@ root?.render(
 )
 
 function RootView() {
+    const [viewType, setViewType] = useState<ViewType>("controls")
     const flightData = useFlightData()
 
-    return (
-        <div>
-            {viewType === "controls" ? (
-                <ControlsView flightData={flightData} />
-            ) : (
-                <MapView flightData={flightData} />
-            )}
-        </div>
+    return viewType === "controls" ? (
+        <ControlsView
+            flightData={flightData}
+            showOtherView={(viewType) => setViewType(viewType)}
+        />
+    ) : (
+        <MapView
+            flightData={flightData}
+            showOtherView={(viewType) => setViewType(viewType)}
+        />
     )
 }
 
-function ControlsView({ flightData }: { flightData: FlightDataValues }) {
+function ControlsView({
+    flightData,
+    showOtherView,
+}: {
+    flightData: FlightDataValues
+    showOtherView: (viewType: ViewType) => void
+}) {
     return (
         <>
             <ControlButtons flightData={flightData} />
-            <DataPanel viewType="controls" />
-        </>
-    )
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function MapView(_props: { flightData: FlightDataValues }) {
-    return (
-        <>
-            <DataPanel viewType="map" />
+            <DataPanel
+                viewType="controls"
+                flightData={flightData}
+                showOtherView={(viewType) => showOtherView(viewType)}
+            />
         </>
     )
 }

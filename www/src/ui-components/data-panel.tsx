@@ -1,10 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
-import { registerDataListener } from "../data-listeners"
 import { ViewType } from "../types"
 import _ from "lodash"
-
-type DataValueType = string | number | boolean
-type DataValues = Record<string, DataValueType>
+import { FlightDataValues, FlightDataValueType } from "../hooks/useFlightData"
 
 type PanelPosition = {
     x: number
@@ -25,28 +22,24 @@ const panelItems = [
         formatter: formatParkingBrake,
     },
 ]
-const panelItemKeys = new Set(panelItems.map((item) => item.key))
 
-// TODO, these should be passed from the map component. Remove after proper componentization.
-declare let clearTrack: (() => void) | undefined
-declare let followAircraft: (() => void) | undefined
-
-export function DataPanel({ viewType = "controls" }: { viewType?: ViewType }) {
-    const [data, setData] = useState<DataValues>({})
+export function DataPanel({
+    viewType,
+    flightData,
+    showOtherView,
+    clearTrack,
+    followAircraft,
+}: {
+    viewType: ViewType
+    flightData: FlightDataValues
+    showOtherView: (viewType: ViewType) => void
+    clearTrack?: () => void
+    followAircraft?: () => void
+}) {
     const [position, setPosition] = useState<PanelPosition>({ x: 0, y: 0 })
     const [isDragging, setIsDragging] = useState(false)
     const [dragOffset, setDragOffset] = useState<PanelPosition>({ x: 0, y: 0 })
     const panelRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        const unsubscribe = registerDataListener((incomingData: unknown) => {
-            handleData(incomingData, setData)
-        })
-
-        return () => {
-            unsubscribe()
-        }
-    }, [])
 
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!panelRef.current) return
@@ -103,7 +96,7 @@ export function DataPanel({ viewType = "controls" }: { viewType?: ViewType }) {
                 <div key={item.key} className="data">
                     <div className="data-item">{item.label}</div>
                     <span className="data-value">
-                        {formatValue(data[item.key], item.formatter)}
+                        {formatValue(flightData[item.key], item.formatter)}
                     </span>
                     {item.unit && (
                         <span className="data-unit"> {item.unit}</span>
@@ -113,23 +106,39 @@ export function DataPanel({ viewType = "controls" }: { viewType?: ViewType }) {
 
             <div className="spacer" />
             {viewType === "controls" ? (
-                <ControlsViewButtons />
+                <ControlsViewButtons showOtherView={showOtherView} />
             ) : (
-                <MapViewButtons />
+                <MapViewButtons
+                    showOtherView={showOtherView}
+                    clearTrack={clearTrack}
+                    followAircraft={followAircraft}
+                />
             )}
         </div>
     )
 }
 
-function ControlsViewButtons() {
+function ControlsViewButtons({
+    showOtherView,
+}: {
+    showOtherView: (viewType: ViewType) => void
+}) {
     return (
         <div className="data vertical-margin flex-column">
-            <a href="/map.html">Show map</a>
+            <button onClick={() => showOtherView("map")}>Show map</button>
         </div>
     )
 }
 
-function MapViewButtons() {
+function MapViewButtons({
+    showOtherView,
+    clearTrack,
+    followAircraft,
+}: {
+    showOtherView: (viewType: ViewType) => void
+    clearTrack?: () => void
+    followAircraft?: () => void
+}) {
     return (
         <div className="data vertical-margin flex-column">
             <button
@@ -146,37 +155,16 @@ function MapViewButtons() {
             >
                 Follow aircraft
             </button>
-            <a href="/">Show controls</a>
+            <button onClick={() => showOtherView("controls")}>
+                Show controls
+            </button>
         </div>
     )
 }
 
-function handleData(
-    incomingData: unknown,
-    setData: React.Dispatch<React.SetStateAction<DataValues>>
-) {
-    if (incomingData && typeof incomingData === "object") {
-        const filteredData = _.pickBy(
-            incomingData,
-            (value, key) =>
-                panelItemKeys.has(key) &&
-                (typeof value === "string" ||
-                    typeof value === "number" ||
-                    typeof value === "boolean")
-        ) as DataValues
-
-        if (!_.isEmpty(filteredData)) {
-            setData((prevData) => ({
-                ...prevData,
-                ...filteredData,
-            }))
-        }
-    }
-}
-
 function formatValue(
-    value: DataValueType | undefined,
-    formatter?: (value: DataValueType | undefined) => string
+    value: FlightDataValueType | undefined,
+    formatter?: (value: FlightDataValueType | undefined) => string
 ): string {
     if (value === undefined) return "—"
     if (formatter) return formatter(value)
@@ -184,10 +172,10 @@ function formatValue(
     return String(value)
 }
 
-function formatParkingBrake(value: DataValueType | undefined): string {
+function formatParkingBrake(value: FlightDataValueType | undefined): string {
     return value ? "Engaged" : "Released"
 }
 
-function formatGear(value: DataValueType | undefined): string {
+function formatGear(value: FlightDataValueType | undefined): string {
     return value ? "Down" : "Up"
 }
