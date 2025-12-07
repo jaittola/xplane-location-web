@@ -15,11 +15,13 @@ export function ControlToggleButton(props: {
     }
 
     return (
-        <div className="control-container">
+        <div className="control-toggle-button">
             <button
-                className={`control-toggle-button ${
-                    isOn ? "control-toggle-button-down" : ""
-                }`}
+                className={
+                    isOn
+                        ? "control-toggle-button-on"
+                        : "control-toggle-button-off"
+                }
                 onClick={handleClick}
             >
                 {props.buttonText}
