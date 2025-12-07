@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { ViewType } from "../types"
 import _ from "lodash"
-import { FlightDataValues, FlightDataValueType } from "../hooks/useFlightData"
+import { FlightDataValues, FlightDataValueType } from "../hooks/use-flight-data"
 
 type PanelPosition = {
     x: number

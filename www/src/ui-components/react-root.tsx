@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { createRoot } from "react-dom/client"
-import { FlightDataValues, useFlightData } from "../hooks/useFlightData"
+import { FlightDataValues, useFlightData } from "../hooks/use-flight-data"
 import { ViewType } from "../types"
 import { ControlButtons } from "./control-buttons"
 import { DataPanel } from "./data-panel"

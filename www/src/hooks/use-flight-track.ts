@@ -1,6 +1,6 @@
 import { LatLngTuple } from "leaflet"
 import { useState, useEffect } from "react"
-import { FlightDataValues, position } from "./useFlightData"
+import { FlightDataValues, position } from "./use-flight-data"
 
 export type FlightTracking = ReturnType<typeof useFlightTrack>
 

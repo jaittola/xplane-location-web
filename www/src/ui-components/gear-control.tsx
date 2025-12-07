@@ -1,5 +1,5 @@
 import { commands } from "../controls-definition"
-import { FlightDataValues, FlightDataValueType } from "../hooks/useFlightData"
+import { FlightDataValues, FlightDataValueType } from "../hooks/use-flight-data"
 import { ControlToggleButton } from "./control-toggle-button"
 
 export function GearControl({ flightData }: { flightData: FlightDataValues }) {

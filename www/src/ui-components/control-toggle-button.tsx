@@ -1,5 +1,5 @@
 import { CommandValue } from "../controls-definition"
-import { FlightDataValues } from "../hooks/useFlightData"
+import { FlightDataValues } from "../hooks/use-flight-data"
 import { sendSocket } from "../websocket"
 
 export function ControlToggleButton(props: {

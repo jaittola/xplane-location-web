@@ -1,5 +1,5 @@
 import { ControlDefinition, toggleButtons } from "../controls-definition"
-import { FlightDataValues } from "../hooks/useFlightData"
+import { FlightDataValues } from "../hooks/use-flight-data"
 import { GearControl } from "./gear-control"
 import { ControlToggleButton } from "./control-toggle-button"
 

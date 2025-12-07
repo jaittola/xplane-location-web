@@ -9,7 +9,7 @@ import {
     TileLayer,
     useMapEvents,
 } from "react-leaflet"
-import { FlightDataValues, position } from "../hooks/useFlightData"
+import { FlightDataValues, position } from "../hooks/use-flight-data"
 import { FlightTracking } from "../hooks/use-flight-track"
 import { defaultLocation, saveLocation } from "../location-cookies"
 import { ViewType } from "../types"
