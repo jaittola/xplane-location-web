@@ -148,6 +148,7 @@ body {
 
 .control-annunciator-container {
     margin: 5px;
+    min-width: 70px;
     display: flex;
     flex-flow: column nowrap;
     justify-content: space-evenly;
@@ -163,6 +164,11 @@ body {
     height: 20px;
     border-radius: 10px;
     background-color: #e0e0e0;
+}
+
+.control-annunciator-value {
+    margin-top: 3px;
+    font-weight: bold;
 }
 
 .inactive-red {

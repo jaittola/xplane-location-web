@@ -1,5 +1,7 @@
 import { ControlDefinition, toggleButtons } from "../controls-definition"
 import { FlightDataValues } from "../hooks/use-flight-data"
+import { FlapsControl } from "./flaps-control"
+import { FlightDataToggleButton } from "./flight-data-toggle-button"
 import { GearControl } from "./gear-control"
 
 export function ControlButtons({
@@ -43,5 +45,7 @@ function Control({
             )
         case "gear":
             return <GearControl flightData={flightData} />
+        case "flaps":
+            return <FlapsControl flightData={flightData} />
     }
 }

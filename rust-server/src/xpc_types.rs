@@ -11,6 +11,12 @@ pub struct ReceivedDatarefs {
     #[serde(rename = "is-gear-handle-down")]
     pub is_gear_handle_down: bool,
 
+    #[serde(rename = "flap-positions")]
+    pub flap_positions: i32,
+
+    #[serde(rename = "current-flap-position")]
+    pub current_flap_position: i32,
+
     #[serde(rename = "avionics-power")]
     pub avionics_power: bool,
 

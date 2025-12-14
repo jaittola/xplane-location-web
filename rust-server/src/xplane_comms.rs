@@ -5,10 +5,7 @@ use crate::{
 use binrw::{binrw, io::Cursor, BinReaderExt, BinResult, BinWrite, NullString};
 use log::{debug, error, info};
 use std::{
-    io::{self},
-    net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4},
-    sync::Arc,
-    time::Duration,
+    cmp::min, io::{self}, net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4}, sync::Arc, time::Duration
 };
 use tokio::{
     net::UdpSocket,
@@ -131,6 +128,8 @@ enum RrefIdentifier {
     HasRetractingGear,
     IsGearUnsafe,
     IsGearHandleDown,
+    NumberOfFlapPositions,
+    CurrentFlapPosition,
     AvionicsPower,
     NavigationLights,
     Beacon,
@@ -176,6 +175,14 @@ static RREF_IDENTITIES: &'static [DatarefIdentity] = &[
     DatarefIdentity {
         id: RrefIdentifier::IsGearHandleDown,
         name: "sim/cockpit2/controls/gear_handle_down",
+    },
+    DatarefIdentity {
+        id: RrefIdentifier::NumberOfFlapPositions,
+        name: "sim/aircraft/controls/acf_flap_detents",
+    },
+    DatarefIdentity {
+        id: RrefIdentifier::CurrentFlapPosition,
+        name: "sim/cockpit2/controls/flap_system_deploy_ratio",
     },
     DatarefIdentity {
         id: RrefIdentifier::AvionicsPower,
@@ -263,7 +270,7 @@ static RREF_IDENTITIES: &'static [DatarefIdentity] = &[
     },
     DatarefIdentity {
         id: RrefIdentifier::TAS,
-        name: "sim/cockpit2/gauges/indicators/ground_speed_kts",
+        name: "sim/cockpit2/gauges/indicators/ground_speed_kt",
     },
     DatarefIdentity {
         id: RrefIdentifier::MagHeading,
@@ -381,6 +388,8 @@ fn handle_dataref(id: u32, value: f32, datarefs: &mut ReceivedDatarefs) {
         RrefIdentifier::HasRetractingGear => datarefs.has_retracting_gear = boolv(value),
         RrefIdentifier::IsGearUnsafe => datarefs.is_gear_unsafe = boolv(value),
         RrefIdentifier::IsGearHandleDown => datarefs.is_gear_handle_down = boolv(value),
+        RrefIdentifier::NumberOfFlapPositions => datarefs.flap_positions = value.round() as i32,
+        RrefIdentifier::CurrentFlapPosition => parse_flap_position(datarefs, value),
         RrefIdentifier::AvionicsPower => datarefs.avionics_power = boolv(value),
         RrefIdentifier::NavigationLights => datarefs.navigation_lights = boolv(value),
         RrefIdentifier::Beacon => datarefs.beacon = boolv(value),
@@ -423,4 +432,14 @@ fn boolv_with_limit(v: f32, limit: f32) -> bool {
 fn parse_flight_director_mode(datarefs: &mut ReceivedDatarefs, value: f32) {
     datarefs.autopilot_flight_director = value > 0f32;
     datarefs.autopilot_engaged = value >= 2f32;
+}
+
+fn parse_flap_position(datarefs: &mut ReceivedDatarefs, value: f32) {
+    let slots = datarefs.flap_positions;
+    if slots <= 0 {
+        return
+    }
+
+    let position = (value * slots as f32).round() as i32;
+    datarefs.current_flap_position = min(position, slots);
 }

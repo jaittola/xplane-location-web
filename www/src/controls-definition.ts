@@ -27,6 +27,8 @@ export const commands = {
     headingUp: "sim/autopilot/heading_up",
     headingDown: "sim/autopilot/heading_down",
     headingSync: "sim/autopilot/heading_sync",
+    flapsUp: "sim/flight_controls/flaps_up",
+    flapsDown: "sim/flight_controls/flaps_down",
 }
 
 export type CommandName = keyof typeof commands
@@ -43,7 +45,14 @@ export type GearControlDefinition = {
     type: "gear"
 }
 
-export type ControlDefinition = ButtonDefinition | GearControlDefinition
+export type FlapsControlDefinition = {
+    type: "flaps"
+}
+
+export type ControlDefinition =
+    | ButtonDefinition
+    | GearControlDefinition
+    | FlapsControlDefinition
 
 export type ControlsDefinition = {
     rowId?: string
@@ -62,6 +71,7 @@ export const toggleButtons: ControlsDefinition = [
             {
                 type: "gear",
             },
+            { type: "flaps" },
         ],
     },
     {
