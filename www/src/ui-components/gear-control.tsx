@@ -1,12 +1,12 @@
 import { commands } from "../controls-definition"
 import { FlightDataValues, FlightDataValueType } from "../hooks/use-flight-data"
-import { ControlToggleButton } from "./control-toggle-button"
+import { FlightDataToggleButton } from "./flight-data-toggle-button"
 
 export function GearControl({ flightData }: { flightData: FlightDataValues }) {
     return (
         flightData["has-retracting-gear"] && (
             <div className="control-container">
-                <ControlToggleButton
+                <FlightDataToggleButton
                     incomingDataKey="is-gear-handle-down"
                     outgoingToggleCommand={commands.toggleGear}
                     buttonText={"Gear"}

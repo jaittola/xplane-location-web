@@ -1,7 +1,6 @@
 import { ControlDefinition, toggleButtons } from "../controls-definition"
 import { FlightDataValues } from "../hooks/use-flight-data"
 import { GearControl } from "./gear-control"
-import { ControlToggleButton } from "./control-toggle-button"
 
 export function ControlButtons({
     flightData,
@@ -35,7 +34,7 @@ function Control({
     switch (control.type) {
         case "button":
             return (
-                <ControlToggleButton
+                <FlightDataToggleButton
                     incomingDataKey={control.incomingDataKey}
                     outgoingToggleCommand={control.outgoingToggleCommand}
                     buttonText={control.text}
