@@ -1,5 +1,6 @@
 import { commands } from "../controls-definition"
 import { FlightDataValues, FlightDataValueType } from "../hooks/use-flight-data"
+import { AnnuniciatorContainer } from "./annunciator-container"
 import { FlightDataToggleButton } from "./flight-data-toggle-button"
 
 export function GearControl({ flightData }: { flightData: FlightDataValues }) {
@@ -54,20 +55,5 @@ function GearDownAndLockedAnnunciator({
         <AnnuniciatorContainer title="Down &amp; locked">
             <div className={className}></div>
         </AnnuniciatorContainer>
-    )
-}
-
-function AnnuniciatorContainer({
-    title,
-    children,
-}: {
-    title: string
-    children: React.ReactNode
-}) {
-    return (
-        <div className="control-annunciator-container">
-            <div className="control-annunciator-light-label">{title}</div>
-            {children}
-        </div>
     )
 }
